@@ -1,0 +1,9 @@
+.dpd-parcelshop-container {
+  display: none;
+}
+.dpd-parcelshop-container.active {
+  display: block;
+}
+input[id*=wc_dpd_parcelshop]:checked ~ .wc-block-components-radio-control__option-layout .dpd-parcelshop-container {
+  display: block;
+}

@@ -1,0 +1,197 @@
+.dpd-parcelshop-widget {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  top: 0;
+  left: 0;
+  z-index: 100000;
+}
+.dpd-parcelshop-widget.active {
+  display: block;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__close-btn {
+  position: absolute;
+  font-size: 0;
+  right: 20px;
+  top: 20px;
+  color: #fff;
+  background: #dc0032;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  padding: 0;
+  height: 50px;
+  width: 50px;
+  display: block;
+  z-index: 2;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__close-btn:before, .dpd-parcelshop-widget .dpd-parcelshop-widget__close-btn:after {
+  content: "";
+  display: block;
+  position: absolute;
+  background: #fff;
+  width: 2px;
+  height: 26px;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  left: 0;
+  right: 0;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__close-btn::before {
+  transform: rotate(-45deg);
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__close-btn::after {
+  transform: rotate(45deg);
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__container {
+  align-self: center;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  padding: 15px;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__widget {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0px;
+  background: #ffffff;
+  padding: 15px;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__form {
+  margin-bottom: 0;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__row {
+  margin-bottom: 15px;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__input-wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__label {
+  min-width: 100px;
+  margin-bottom: 0;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__input, .dpd-parcelshop-widget .dpd-parcelshop-widget__input:hover, .dpd-parcelshop-widget .dpd-parcelshop-widget__input:focus {
+  width: 100%;
+  padding: 5px;
+  background: #ffffff;
+  outline: none;
+  border: 1px solid #ccc;
+  background: #fff;
+  line-height: normal;
+  color: #000;
+  box-shadow: none;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__input {
+  cursor: pointer;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__search-btn, .dpd-parcelshop-widget .dpd-parcelshop-widget__choose-btn {
+  color: #fff;
+  background: #dc0032;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  padding: 0 14px;
+  width: 100%;
+  cursor: pointer;
+  height: 40px;
+  line-height: normal;
+  box-sizing: border-box;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__search-btn.loading {
+  position: relative;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__search-btn.loading:before {
+  content: "";
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__search-btn.loading:after {
+  animation: dpd-parcelshop-input-loading-animation 1.2s linear infinite;
+  border-color: #dc0032 transparent;
+  border-radius: 50%;
+  border-style: solid;
+  border-width: 1px;
+  content: " ";
+  display: block;
+  height: 16px;
+  position: absolute;
+  width: 16px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 2;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__results {
+  display: none;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__results.active {
+  display: block;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__parcels-list {
+  max-height: 120px;
+  overflow: auto;
+  margin-bottom: 15px;
+  margin-top: 15px;
+  margin-left: 0;
+  padding: 0;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__parcels-list li {
+  cursor: pointer;
+  color: #000;
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-bottom-width: 0;
+  transition: background-color 0.2s linear, color 0.2s linear;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__parcels-list li:last-child {
+  border-bottom-width: 1px;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__parcels-list li:hover {
+  background-color: #ccc;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__parcels-list li.active {
+  background-color: #dc0032;
+  color: #fff;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__response {
+  display: none;
+  text-align: center;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__response.active {
+  display: block;
+}
+.dpd-parcelshop-widget .dpd-parcelshop-widget__response p {
+  margin-top: 15px;
+  font-size: 16px;
+  color: red;
+  margin-bottom: 15px;
+}
+@keyframes dpd-parcelshop-input-loading-animation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

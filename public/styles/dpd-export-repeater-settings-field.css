@@ -1,0 +1,67 @@
+.repeatable-field {
+  padding: 0;
+  border: none;
+}
+.repeatable-field__rows, .repeatable-field__bottom {
+  max-width: 400px;
+}
+.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__rows, .repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__bottom {
+  max-width: 480px;
+}
+.repeatable-field__rows {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+.repeatable-field__rows > .repeatable-field__row + .repeatable-field__row {
+  margin-top: 0.815rem;
+}
+.repeatable-field__row:only-child .repeatable-field__remove-button {
+  display: none;
+}
+.repeatable-field__row-wrap {
+  display: flex;
+  align-items: center;
+}
+.repeatable-field__input {
+  flex: 1;
+  margin-right: 5px !important;
+  width: 50% !important;
+}
+.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__input {
+  width: 95% !important;
+  min-width: 100px !important;
+}
+.repeatable-field__input:last-child {
+  margin-right: 0 !important;
+}
+.repeatable-field__input--radio {
+  min-width: 16px !important;
+  max-width: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-top: 0 !important;
+}
+.repeatable-field__remove-button {
+  margin-left: 0.5rem;
+  padding: 0.25rem;
+  color: #b91c1c;
+  background: none;
+}
+.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__remove-button {
+  margin-top: 31px !important;
+}
+.repeatable-field__remove-button:hover, .repeatable-field__remove-button:focus {
+  text-decoration: none;
+  box-shadow: none;
+}
+.repeatable-field__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+.repeatable-field__add-button {
+  display: block;
+  font-size: 14px;
+}

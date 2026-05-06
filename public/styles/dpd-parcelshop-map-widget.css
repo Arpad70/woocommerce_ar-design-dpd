@@ -1,0 +1,35 @@
+.dpd-parcelshop-map-widget {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  top: 0;
+  left: 0;
+  z-index: 100000;
+}
+.dpd-parcelshop-map-widget.active {
+  display: block;
+}
+.dpd-parcelshop-map-widget .dpd-parcelshop-map-widget__container {
+  align-self: center;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  padding: 15px;
+}
+.dpd-parcelshop-map-widget .dpd-parcelshop-map-widget__embed {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0px;
+  background: #ffffff;
+  padding: 15px;
+}

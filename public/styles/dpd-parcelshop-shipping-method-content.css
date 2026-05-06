@@ -1,0 +1,36 @@
+.dpd-parcelshop-shipping-method-content {
+  width: 100%;
+  padding: 5px 0;
+}
+.dpd-parcelshop-shipping-method-content__open-btn-wrap {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+.dpd-parcelshop-shipping-method-content__logo {
+  width: 80px;
+  margin-right: 15px;
+}
+.dpd-parcelshop-shipping-method-content__open-btn {
+  color: #fff;
+  background-color: #dc0032;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  padding: 5px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  height: auto;
+  line-height: 1.2;
+}
+.dpd-parcelshop-shipping-method-content__chosen-parcelshop-wrap {
+  width: 100%;
+  padding: 5px 0;
+  display: none;
+}
+.dpd-parcelshop-shipping-method-content__chosen-parcelshop-wrap.active {
+  display: block;
+}
+.dpd-parcelshop-shipping-method-content__chosen-parcelshop {
+  margin-bottom: 0;
+}

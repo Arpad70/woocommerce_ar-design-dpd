@@ -1,0 +1,684 @@
+# Copyright (C) 2026 Webikon
+# This file is distributed under the GPLv2.
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: DPD SK for WooCommerce 8.5.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wc-dpd\n"
+"POT-Creation-Date: 2026-03-31 09:16+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.7\n"
+
+#. Plugin Name of the plugin
+#: wc-dpd.php
+msgid "DPD SK for WooCommerce"
+msgstr ""
+
+#. Description of the plugin
+#: wc-dpd.php
+msgid "DPD SK plugin for WooCommerce which exports orders to the DPD through their API"
+msgstr ""
+
+#. Author of the plugin
+#: wc-dpd.php
+msgid "Webikon"
+msgstr ""
+
+#. Author URI of the plugin
+#: wc-dpd.php
+msgid "https://www.webikon.sk"
+msgstr ""
+
+#: includes/Ajax.php:46
+msgid "Please fill all the required fields."
+msgstr ""
+
+#: includes/Ajax.php:76
+msgid "No parcelshops was found. Try changing the input values and search again."
+msgstr ""
+
+#: includes/Assets.php:50
+msgid "No pickup point types are allowed. Please check the shipping settings."
+msgstr ""
+
+#: includes/Assets.php:56
+msgid "Please fill all the fields above!"
+msgstr ""
+
+#: includes/Assets.php:57
+msgid "Please select one of the available parcelshops!"
+msgstr ""
+
+#: includes/Blocks.php:72 includes/Shipping.php:76
+msgid "You have to choose a parcelshop."
+msgstr ""
+
+#: includes/Blocks.php:77
+msgid "Parcel shop ID is required."
+msgstr ""
+
+#: includes/Blocks.php:78
+msgid "Parcel shop name is required."
+msgstr ""
+
+#: includes/Blocks.php:79
+msgid "Parcel shop street is required."
+msgstr ""
+
+#: includes/Blocks.php:80
+msgid "Parcel shop ZIP code is required."
+msgstr ""
+
+#: includes/Blocks.php:81
+msgid "Parcel shop city is required."
+msgstr ""
+
+#: includes/Blocks.php:82
+msgid "Parcel shop country code is required."
+msgstr ""
+
+#: includes/Client.php:40
+msgid "Use the correct request method. Possible values are: %s"
+msgstr ""
+
+#: includes/Client.php:69
+msgid "Something went wrong: %s"
+msgstr ""
+
+#: includes/Client.php:73
+msgid "Something went wrong! Response is empty!"
+msgstr ""
+
+#: includes/Client.php:125
+msgid "Something went wrong!"
+msgstr ""
+
+#: includes/DpdExportSettings.php:40 includes/DpdExportSettings.php:42
+msgid "DPD Export Settings"
+msgstr ""
+
+#: includes/DpdExportSettings.php:41
+msgid "Default settings for DPD export"
+msgstr ""
+
+#: includes/DpdExportSettings.php:75
+msgid "Slovak"
+msgstr ""
+
+#: includes/DpdExportSettings.php:76
+msgid "English"
+msgstr ""
+
+#: includes/DpdExportSettings.php:77
+msgid "Hungarian"
+msgstr ""
+
+#: includes/DpdExportSettings.php:78
+msgid "German"
+msgstr ""
+
+#: includes/DpdExportSettings.php:79
+msgid "French"
+msgstr ""
+
+#: includes/DpdExportSettings.php:91
+msgid "Choose"
+msgstr ""
+
+#: includes/DpdExportSettings.php:92
+msgid "DPD Classic"
+msgstr ""
+
+#: includes/DpdExportSettings.php:93
+msgid "DPD Home"
+msgstr ""
+
+#: includes/DpdExportSettings.php:94
+msgid "DPD 10:00"
+msgstr ""
+
+#: includes/DpdExportSettings.php:95
+msgid "DPD 12:00"
+msgstr ""
+
+#: includes/DpdExportSettings.php:96
+msgid "DPD 18:00 / DPD Guarantee"
+msgstr ""
+
+#: includes/DpdExportSettings.php:194
+msgid "ID delis"
+msgstr ""
+
+#: includes/DpdExportSettings.php:195
+msgid "This is the username you got from DPD to login to their service"
+msgstr ""
+
+#: includes/DpdExportSettings.php:196
+msgid "Unique customer identifier assigned by DPD."
+msgstr ""
+
+#: includes/DpdExportSettings.php:201
+msgid "Client email"
+msgstr ""
+
+#: includes/DpdExportSettings.php:205
+msgid "API key"
+msgstr ""
+
+#: includes/DpdExportSettings.php:206
+msgid "Your api key"
+msgstr ""
+
+#: includes/DpdExportSettings.php:207
+msgid "Unique authentication key required to access API."
+msgstr ""
+
+#: includes/DpdExportSettings.php:212 includes/DpdExportSettings.php:317
+msgid "Bank account ID"
+msgstr ""
+
+#: includes/DpdExportSettings.php:215
+msgid "Bank account"
+msgstr ""
+
+#: includes/DpdExportSettings.php:216
+msgid "Add bank account"
+msgstr ""
+
+#: includes/DpdExportSettings.php:217
+msgid "Select your default bank account."
+msgstr ""
+
+#: includes/DpdExportSettings.php:220
+msgid "ID of the collection address"
+msgstr ""
+
+#: includes/DpdExportSettings.php:223
+msgid "Address"
+msgstr ""
+
+#: includes/DpdExportSettings.php:224
+msgid "Add address"
+msgstr ""
+
+#: includes/DpdExportSettings.php:225
+msgid "Select your default address."
+msgstr ""
+
+#: includes/DpdExportSettings.php:228
+msgid "Transport"
+msgstr ""
+
+#: includes/DpdExportSettings.php:234
+msgid "Notifications"
+msgstr ""
+
+#: includes/DpdExportSettings.php:240
+msgid "Labels format"
+msgstr ""
+
+#: includes/DpdExportSettings.php:249
+msgid "Enable Map Widget"
+msgstr ""
+
+#: includes/DpdExportSettings.php:252
+msgid "Enable this option to display the map widget. If enabled, a valid Map API Key is required for the widget to function properly."
+msgstr ""
+
+#: includes/DpdExportSettings.php:256
+msgid "Map API Key"
+msgstr ""
+
+#: includes/DpdExportSettings.php:258
+msgid "Enter a valid DPD Map API Key. This is required if the Map Widget is enabled."
+msgstr ""
+
+#: includes/DpdExportSettings.php:262
+msgid "Language"
+msgstr ""
+
+#: includes/DpdExportSettings.php:266
+msgid "Select the language for DPD map widget"
+msgstr ""
+
+#: includes/DpdExportSettings.php:311
+#: includes/DpdParcelShopShippingMethod.php:620
+msgid "Remove"
+msgstr ""
+
+#: includes/DpdExportSettings.php:316
+msgid "Bank account name"
+msgstr ""
+
+#: includes/DpdExportSettings.php:320
+msgid "Address name"
+msgstr ""
+
+#: includes/DpdExportSettings.php:321
+msgid "Address ID"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:64
+msgid "DPD parcelshop"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:65
+msgid "Allow customers to deliver to the DPD parcelshops."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:87
+msgid "DPD Pickup/Pickup Station"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:124
+#: includes/DpdParcelShopShippingMethod.php:691
+msgid "At least one pickup point type must remain enabled. You cannot disable shops and all locker types at the same time."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:140
+#: includes/DpdParcelShopShippingMethod.php:692
+msgid "You cannot disable all lockers globally and also disable all individual locker types at the same time. This configuration is redundant."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:164
+msgid "Tax status"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:169
+msgctxt "Tax status"
+msgid "None"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:170
+msgid "Taxable"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:174
+msgid "Shipping type"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:177
+msgid "Fixed shipping price"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:178
+msgid "Products weight based shipping price"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:180
+msgid "Choose type of the shipping."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:185
+msgid "Delivery fee"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:187
+msgid "What fee do you want to charge for shipping to the parcelshop."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:194
+#: includes/DpdParcelShopShippingMethod.php:218
+msgid "Free shipping from"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:196
+#: includes/DpdParcelShopShippingMethod.php:220
+msgid "Set minimum cart value for free shipping. Leave empty to disable free shipping entirely."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:203
+msgid "Products weight based shipping rates"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:205
+msgid "Add shipping rates based on the weight of products in the cart."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:207
+msgid "Shipping rate"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:208
+msgid "Min weight (%s)"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:209
+msgid "Max weight (%s)"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:210
+#: includes/DpdParcelShopShippingMethod.php:213
+msgid "Price"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:210
+msgid "with"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:210
+msgid "without"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:210
+msgid "tax"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:211
+msgid "Min weight"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:212
+msgid "Max weight"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:214
+msgid "Add a shipping rate"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:227
+msgid "Setting the weight limits for packages"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:228
+msgid "If the shipment does not meet the conditions for delivery in a parcelbox, this shipping method will not be displayed."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:235
+msgid "Maximum weight"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:242
+msgid "Maximum weight for Alzabox"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:249
+msgid "Maximum weight for Slovenska Posta box"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:256
+msgid "Maximum weight for Z-Box (Packeta)"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:263
+msgid "Setting the dimension limits for packages"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:264
+msgid "If the shipment does not meet the conditions for delivery in a box, this shipping method will not be displayed."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:271
+msgid "Maximum width"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:276
+msgid "Maximum height"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:281
+msgid "Maximum length"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:286
+msgid "Maximum width for Alzabox"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:291
+msgid "Maximum height for Alzabox"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:296
+msgid "Maximum length for Alzabox"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:301
+msgid "Maximum width for Slovenska Posta box"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:306
+msgid "Maximum height for Slovenska Posta box"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:311
+msgid "Maximum length for Slovenska Posta box"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:316
+msgid "Maximum width for Z-Box (Packeta)"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:321
+msgid "Maximum height for Z-Box (Packeta)"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:326
+msgid "Maximum length for Z-Box (Packeta)"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:331
+msgid "Disallow Shops"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:335
+msgid "If checked, DPD Pickup shops will be disabled."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:339
+msgid "Disallow Lockers"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:343
+msgid "If checked, all locker types will be disabled."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:347
+msgid "Disallow DPD Pickup Stations"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:351
+msgid "If checked, DPD Pickup Stations will be disabled."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:355
+msgid "Disallow Slovenská Pošta Boxes"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:359
+msgid "If checked, Slovenská Pošta boxes will be disabled."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:363
+msgid "Disallow Alza Boxes"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:367
+msgid "If checked, Alza Boxes will be disabled."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:371
+msgid "Disallow Z-Box (Packeta)"
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:375
+msgid "If checked, Z-Box (Packeta) will be disabled."
+msgstr ""
+
+#: includes/DpdParcelShopShippingMethod.php:621
+msgid "Title"
+msgstr ""
+
+#: includes/Order.php:55
+msgid "Order %d is already exported to DPD."
+msgstr ""
+
+#: includes/Order.php:70
+msgid "Order %d was successfully exported"
+msgstr ""
+
+#: includes/Order.php:107
+msgid "Order %d export data was successfully reset"
+msgstr ""
+
+#: includes/Order.php:135
+msgid "Full name %s is longer than %d characters. Please shorten it."
+msgstr ""
+
+#: includes/Order.php:146
+msgid "Company name %s is longer than %d characters. Please shorten it."
+msgstr ""
+
+#: includes/Order.php:494
+msgid "Order %d does not have the package number and its label couldn't be printed."
+msgstr ""
+
+#: includes/Order.php:504
+msgid "None of your selected orders have a package number."
+msgstr ""
+
+#: includes/Order.php:513
+msgid "Something went wrong and the pdf content is not valid. Please check orders %s if the package numbers are correct."
+msgstr ""
+
+#: includes/OrderList.php:43
+msgid "DPD Bulk Export"
+msgstr ""
+
+#: includes/OrderList.php:44
+msgid "DPD Bulk Download Labels"
+msgstr ""
+
+#: includes/OrderList.php:92 includes/OrderMetabox.php:275
+msgid "Export to DPD"
+msgstr ""
+
+#: includes/OrderList.php:126
+msgid "Export"
+msgstr ""
+
+#: includes/OrderList.php:136
+msgid "Download label"
+msgstr ""
+
+#: includes/OrderList.php:140 includes/OrderMetabox.php:155
+msgid "Package number"
+msgstr ""
+
+#: includes/OrderList.php:159
+msgid "Wrong order ID %d"
+msgstr ""
+
+#: includes/OrderMetabox.php:31
+msgid "DPD Export"
+msgstr ""
+
+#: includes/OrderMetabox.php:148
+msgid "Export Status"
+msgstr ""
+
+#: includes/OrderMetabox.php:148
+msgid "Success"
+msgstr ""
+
+#: includes/OrderMetabox.php:151
+msgid "Download DPD label"
+msgstr ""
+
+#: includes/OrderMetabox.php:161
+msgid "Reset"
+msgstr ""
+
+#: includes/OrderMetabox.php:201
+msgid "ID Bank account"
+msgstr ""
+
+#: includes/OrderMetabox.php:221
+msgid "ID of the collection point"
+msgstr ""
+
+#: includes/OrderMetabox.php:241
+msgid "Shipping product"
+msgstr ""
+
+#: includes/OrderMetabox.php:253
+msgid "Notification"
+msgstr ""
+
+#: includes/OrderMetabox.php:258 includes/OrderMetabox.php:263
+msgid "Reference %d"
+msgstr ""
+
+#: includes/OrderMetabox.php:268
+msgid "Package Weight (kg)"
+msgstr ""
+
+#: includes/OrderMetabox.php:270
+msgid "You can set the weight of the package. Leave empty for default: 3.00 kg."
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:17
+msgid "Chosen Parcelshop"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:21
+msgid "Parcelshop ID"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:25
+msgid "Parcelshop PUS ID"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:29
+msgid "Parcelshop name"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:33
+msgid "Parcelshop street"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:37
+msgid "Parcelshop zip"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:41
+msgid "Parcelshop city"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:45
+msgid "Parcelshop country"
+msgstr ""
+
+#: templates/chosen-parcelshop-order-data.php:47
+msgid "Parcelshop country code"
+msgstr ""
+
+#: templates/parcelshop-popup.php:18
+msgid "City"
+msgstr ""
+
+#: templates/parcelshop-popup.php:23
+msgid "Zip"
+msgstr ""
+
+#: templates/parcelshop-popup.php:28
+msgid "Country"
+msgstr ""
+
+#: templates/parcelshop-popup.php:39
+msgid "Search"
+msgstr ""
+
+#: templates/parcelshop-popup.php:49
+#: templates/parcelshop-shipping-method-content.php:59
+#: templates/parcelshop-shipping-method-content.php:61
+msgid "Choose parcelshop"
+msgstr ""
+
+#: templates/parcelshop-shipping-method-content.php:65
+msgid "Selected parcelshop"
+msgstr ""
