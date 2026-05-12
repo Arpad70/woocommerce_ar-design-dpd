@@ -2,14 +2,14 @@
 
 /*
  * Plugin Name: AR Design DPD for WooCommerce
- * Description: Samostatný DPD modul pre WooCommerce spravovaný AR Design. Fork vychádza z pôvodnej integrácie Webikon, ktorá zostáva uvedená ako coworker foundation projektu.
- * Version: 8.5.0
- * Author: AR Design
- * Author URI: https://github.com/Arpad70
+ * Description: Samostatný DPD modul pre WooCommerce spravovaný Arpád Horák. Fork vychádza z pôvodnej integrácie Webikon, ktorá zostáva uvedená ako coworker foundation projektu.
+ * Version: 8.6.0
+ * Author: Arpád Horák
+ * Author URI: https://arpad-horak.cz
  * Update URI: https://github.com/Arpad70/woocommerce_ar-design-dpd
  * License: GPLv2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain: wc-dpd
+ * Text Domain: ar-design-dpd
  * Domain Path: /languages
  * Requires at least: 5.3
  * Tested up to: 6.9.4
@@ -18,7 +18,7 @@
  * WC tested up to: 10.6.1
  */
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -28,17 +28,73 @@ defined('ABSPATH') || exit;
 //  Work out plugin folder name and store it as a constant
 $plugin_dir = str_replace(basename(__FILE__), "", plugin_basename(__FILE__));
 $plugin_dir = substr($plugin_dir, 0, strlen($plugin_dir) - 1);
-define('WCDPD_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('WCDPD_PLUGIN_DIR', $plugin_dir);
-define('WCDPD_PLUGIN_INDEX', __FILE__);
-define('WCDPD_PLUGIN_WC_MIN_VERSION', '7.0');
-define('WCDPD_PLUGIN_ASSETS_URL', plugins_url(WCDPD_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR));
-define('WCDPD_PLUGIN_TEMPLATES_PATH', WCDPD_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR);
-define('AR_DESIGN_DPD_VERSION', '8.5.0');
+define('AR_DESIGN_DPD_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('AR_DESIGN_DPD_PLUGIN_DIR', $plugin_dir);
+define('AR_DESIGN_DPD_PLUGIN_INDEX', __FILE__);
+define('AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION', '7.0');
+define('AR_DESIGN_DPD_PLUGIN_ASSETS_URL', plugins_url(AR_DESIGN_DPD_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR));
+define('AR_DESIGN_DPD_PLUGIN_TEMPLATES_PATH', AR_DESIGN_DPD_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR);
+define('AR_DESIGN_DPD_VERSION', '8.6.0');
 define('AR_DESIGN_DPD_BASENAME', plugin_basename(__FILE__));
 define('AR_DESIGN_DPD_REPOSITORY', 'Arpad70/woocommerce_ar-design-dpd');
+define('AR_DESIGN_DPD_TEXT_DOMAIN', 'ar-design-dpd');
 
-require_once WCDPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'Updater.php';
+$legacy_constants = [
+    'WCDPD_PLUGIN_PATH' => AR_DESIGN_DPD_PLUGIN_PATH,
+    'WCDPD_PLUGIN_DIR' => AR_DESIGN_DPD_PLUGIN_DIR,
+    'WCDPD_PLUGIN_INDEX' => AR_DESIGN_DPD_PLUGIN_INDEX,
+    'WCDPD_PLUGIN_WC_MIN_VERSION' => AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION,
+    'WCDPD_PLUGIN_ASSETS_URL' => AR_DESIGN_DPD_PLUGIN_ASSETS_URL,
+    'WCDPD_PLUGIN_TEMPLATES_PATH' => AR_DESIGN_DPD_PLUGIN_TEMPLATES_PATH,
+];
+
+foreach ($legacy_constants as $legacy_constant_name => $legacy_constant_value) {
+    if (!defined($legacy_constant_name)) {
+        define($legacy_constant_name, $legacy_constant_value);
+    }
+}
+
+require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'Updater.php';
+
+if (class_exists(__NAMESPACE__ . '\\ArDesignDpdUpdater') && !class_exists('WcDPD\\ArDesignDpdUpdater', false)) {
+    class_alias(__NAMESPACE__ . '\\ArDesignDpdUpdater', 'WcDPD\\ArDesignDpdUpdater');
+}
+
+function ard_dpd_register_legacy_class_aliases(): void
+{
+    $legacy_aliases = [
+        Ajax::class => 'WcDPD\\Ajax',
+        \ArDesign\DPD\Automation::class => 'WcDPD\\Automation',
+        Assets::class => 'WcDPD\\Assets',
+        Blocks::class => 'WcDPD\\Blocks',
+        Client::class => 'WcDPD\\Client',
+        Core::class => 'WcDPD\\Core',
+        DpdExport::class => 'WcDPD\\DpdExport',
+        DpdExportSettings::class => 'WcDPD\\DpdExportSettings',
+        DpdClassicShippingMethod::class => 'WcDPD\\DpdClassicShippingMethod',
+        DpdHomeShippingMethod::class => 'WcDPD\\DpdHomeShippingMethod',
+        DpdExpress1000ShippingMethod::class => 'WcDPD\\DpdExpress1000ShippingMethod',
+        DpdExpress1200ShippingMethod::class => 'WcDPD\\DpdExpress1200ShippingMethod',
+        DpdGuaranteeShippingMethod::class => 'WcDPD\\DpdGuaranteeShippingMethod',
+        DpdParcelShopShippingMethod::class => 'WcDPD\\DpdParcelShopShippingMethod',
+        Email::class => 'WcDPD\\Email',
+        Hooks::class => 'WcDPD\\Hooks',
+        Notice::class => 'WcDPD\\Notice',
+        Order::class => 'WcDPD\\Order',
+        OrderList::class => 'WcDPD\\OrderList',
+        OrderMetabox::class => 'WcDPD\\OrderMetabox',
+        \ArDesign\DPD\Shipment::class => 'WcDPD\\Shipment',
+        Shipping::class => 'WcDPD\\Shipping',
+        Tracking::class => 'WcDPD\\Tracking',
+        ArDesignDpdUpdater::class => 'WcDPD\\ArDesignDpdUpdater',
+    ];
+
+    foreach ($legacy_aliases as $modern_class => $legacy_alias) {
+        if (class_exists($modern_class) && !class_exists($legacy_alias, false)) {
+            class_alias($modern_class, $legacy_alias);
+        }
+    }
+}
 
 /**
  * Declare HPOS support
@@ -53,13 +109,13 @@ add_action('before_woocommerce_init', function () {
  * Check if WC meets the required version
  */
 add_action('admin_notices', function () {
-    if (class_exists('WooCommerce') && version_compare(WC()->version, WCDPD_PLUGIN_WC_MIN_VERSION, '>=')) {
+    if (class_exists('WooCommerce') && version_compare(WC()->version, AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION, '>=')) {
         return; // WooCommerce is active and meets the required version, so no notice needed
     }
 
     ?>
     <div class="notice notice-error is-dismissible">
-        <p><?php echo sprintf(__('DPD SK for WooCommerce plugin requires WooCommerce version %s or higher to work properly. Please update WooCommerce to use this plugin.', 'wc-dpd'), WCDPD_PLUGIN_WC_MIN_VERSION); ?></p>
+        <p><?php echo sprintf(__('DPD SK for WooCommerce plugin requires WooCommerce version %s or higher to work properly. Please update WooCommerce to use this plugin.', AR_DESIGN_DPD_TEXT_DOMAIN), AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION); ?></p>
     </div>
     <?php
 });
@@ -69,29 +125,31 @@ add_action('admin_notices', function () {
  */
 add_action('plugins_loaded', function () {
     // Check that the composer autoloader is present
-    $composer_autoloader = WCDPD_PLUGIN_PATH . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+    $composer_autoloader = AR_DESIGN_DPD_PLUGIN_PATH . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
     if (!file_exists($composer_autoloader)) {
         return;
     }
 
     require_once $composer_autoloader;
 
-    if (!\WcDPD\is_woocommerce_active()) {
+    ard_dpd_register_legacy_class_aliases();
+
+    if (!\ArDesign\DPD\is_woocommerce_active()) {
         return; // WooCommerce is not active, so exit early
     }
 
-    \WcDPD\Core::initTranslations();
+    \ArDesign\DPD\Core::initTranslations();
 
     // Compare the installed WooCommerce version with the required version
-    if (!class_exists('WooCommerce') || version_compare(WC()->version, WCDPD_PLUGIN_WC_MIN_VERSION, '<')) {
+    if (!class_exists('WooCommerce') || version_compare(WC()->version, AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION, '<')) {
         return; // WooCommerce is not active or doesn't meet the required version, so exit early
     }
 
     // Initialize the plugin
-    \WcDPD\Core::init();
+    \ArDesign\DPD\Core::init();
 });
 
-$ar_design_dpd_updater = new \WcDPD\ArDesignDpdUpdater(
+$ar_design_dpd_updater = new \ArDesign\DPD\ArDesignDpdUpdater(
     AR_DESIGN_DPD_REPOSITORY,
     AR_DESIGN_DPD_BASENAME,
     AR_DESIGN_DPD_VERSION

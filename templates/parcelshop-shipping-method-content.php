@@ -1,8 +1,8 @@
 
 <?php
-use WcDPD\DpdParcelShopShippingMethod;
+use ArDesign\DPD\DpdParcelShopShippingMethod;
 
-use function WcDPD\is_map_widget_enabled;
+use function ArDesign\DPD\is_map_widget_enabled;
 
 $chosen_parcelshop_id = isset($chosen_parcelshop_id) ? $chosen_parcelshop_id : '';
 $chosen_parcelshop_pus_id = isset($chosen_parcelshop_pus_id) ? $chosen_parcelshop_pus_id : '';
@@ -56,13 +56,13 @@ $disallow_zbox = isset($disallow_zbox) ? (bool) $disallow_zbox : false;
 				data-disallow-sk-post="<?php echo $disallow_sk_post ? 'true' : 'false'; ?>"
 				data-disallow-alza-boxes="<?php echo $disallow_alza_boxes ? 'true' : 'false'; ?>"
 				data-disallow-zbox="<?php echo $disallow_zbox ? 'true' : 'false'; ?>"
-			><?php echo __('Choose parcelshop', 'wc-dpd'); ?></button>
+			><?php echo __('Choose parcelshop', 'ar-design-dpd'); ?></button>
 		<?php else: ?>
-			<button type="button" class="js-dpd-parcelshop-open-popup-btn dpd-parcelshop-shipping-method-content__open-btn"><?php echo __('Choose parcelshop', 'wc-dpd'); ?></button>
+			<button type="button" class="js-dpd-parcelshop-open-popup-btn dpd-parcelshop-shipping-method-content__open-btn"><?php echo __('Choose parcelshop', 'ar-design-dpd'); ?></button>
 		<?php endif; ?>
 	</div>
 	<div class="js-dpd-chosen-parcelshop-content dpd-parcelshop-shipping-method-content__chosen-parcelshop-wrap <?php echo $chosen_parcelshop_text ? 'active' : ''; ?>">
-		<p class="dpd-parcelshop-shipping-method-content__chosen-parcelshop"><?php echo __('Selected parcelshop', 'wc-dpd'); ?>: <strong class="js-dpd-chosen-parcelshop-chosen-parcelshop-text"><?php echo $chosen_parcelshop_text; ?></strong></p>
+		<p class="dpd-parcelshop-shipping-method-content__chosen-parcelshop"><?php echo __('Selected parcelshop', 'ar-design-dpd'); ?>: <strong class="js-dpd-chosen-parcelshop-chosen-parcelshop-text"><?php echo $chosen_parcelshop_text; ?></strong></p>
 	</div>
 	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-id" value="<?php echo esc_attr($chosen_parcelshop_id); ?>">
 	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-pus-id" value="<?php echo esc_attr($chosen_parcelshop_pus_id); ?>">

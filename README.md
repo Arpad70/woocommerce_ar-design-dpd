@@ -25,6 +25,21 @@ Samostatný DPD modul pre WooCommerce spravovaný AR Design.
 - release workflow je v `.github/workflows/release.yml`
 - automatický PR pre release zmeny je v `.github/workflows/auto-pr-version.yml`
 
+## Aktuálna technická architektúra
+
+- export zásielok používa **DPD SK shipper JSON-RPC API**
+- tracking používa **STATUSDATA** import z lokálneho adresára a voliteľne zo SFTP
+- ParcelShop lookup zostáva samostatne napojený na starší `parcelshop/json` endpoint
+
+Legacy NST export fallback a legacy tracking API polling už nie sú súčasťou aktívnej architektúry pluginu.
+
+## Dokumentácia pre vývojárov
+
+Pre ďalší vývoj a code review pozrite:
+
+- `DEVELOPER_GUIDE.md` — aktuálna architektúra, hlavné toky, dôležité súbory a pravidlá pre ďalšie úpravy
+- `MAINTAINER_HANDOFF.md` — praktický checklist pre maintainera: čo skontrolovať pred nasadením, po nasadení a pri incidente
+
 ## Inštalácia
 
 1. Nahrajte plugin do `wp-content/plugins/ar-design-dpd`.

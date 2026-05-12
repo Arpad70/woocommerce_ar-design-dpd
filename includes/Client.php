@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 use Exception;
 
@@ -13,11 +13,14 @@ class Client
 {
     public const RESPONSE_SUCCESS_STATUS = 'success';
     public const RESPONSE_ERROR_STATUS = 'error';
+    public const RESPONSE_WARNING_MESSAGE_KEY = 'warning_message';
+    private const LEGACY_URL = 'https://api.dpd.sk/';
+    private const SHIPPER_URL = 'https://capi.dpd.sk/shipment/json';
 
     /**
      * @var string
      */
-    private $url = "https://api.dpd.sk/";
+    private $url = self::LEGACY_URL;
 
     /**
      * Sumit request
@@ -27,7 +30,7 @@ class Client
      * @param array $data
      * @param bool $log_request
      *
-     * @throws Exceptino
+        * @throws Exception
      *
      * @return array|bool|false|string
      */
@@ -37,7 +40,7 @@ class Client
         $methods = ['get', 'post'];
 
         if (!in_array($method, $methods)) {
-            throw new Exception(sprintf(__('Use the correct request method. Possible values are: %s', 'wc-dpd'), implode(', ', $methods)));
+            throw new Exception(sprintf(__('Use the correct request method. Possible values are: %s', 'ar-design-dpd'), implode(', ', $methods)));
         }
 
         $request_data = [
@@ -58,7 +61,7 @@ class Client
         $response_body_decoded = json_decode($response_body, true);
 
         if ($log_request) {
-            wc_dpd_log('Request log', [
+            ard_dpd_log('Request log', [
                 'data' => $data,
                 'response' => json_encode($response),
             ]);
@@ -66,11 +69,11 @@ class Client
 
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
-            throw new Exception(sprintf(__('Something went wrong: %s', 'wc-dpd'), $response->get_error_message()));
+            throw new Exception(sprintf(__('Something went wrong: %s', 'ar-design-dpd'), $response->get_error_message()));
         }
 
         if (empty($response)) {
-            throw new Exception(__('Something went wrong! Response is empty!', 'wc-dpd'), 400);
+            throw new Exception(__('Something went wrong! Response is empty!', 'ar-design-dpd'), 400);
         }
 
         if (isset($response_body_decoded['error'])) {
@@ -86,7 +89,7 @@ class Client
                 $error_code = isset($response_body_decoded['code']) ? (int) $response_body_decoded['code'] : '';
             }
 
-            $error_message = apply_filters('wc_dpd_client_error_message', $error_message);
+            $error_message = ard_dpd_apply_filters('wc_dpd_client_error_message', 'ard_dpd_client_error_message', $error_message);
 
             throw new Exception(esc_html($error_message), $error_code ? $error_code : 400);
         }
@@ -105,40 +108,48 @@ class Client
      */
     public function export($data = [])
     {
-        $response = false;
+        return $this->exportViaShipper(is_array($data) ? $data : []);
+    }
 
-        try {
-            $response = $this->call('post', "shipment/json", $data, true);
-        } catch (Exception $e) {
-            throw $e;
+    private function exportViaShipper(array $data = []): array
+    {
+        $response = $this->callShipper($data, true);
+        $results = isset($response['result']['result']) && is_array($response['result']['result'])
+            ? $response['result']['result']
+            : [];
+        $shipmentResult = isset($results[0]) && is_array($results[0]) ? $results[0] : [];
+
+        $this->throwOnShipperErrors($response, $shipmentResult);
+
+        $warningMessage = $this->extractShipperWarningMessage($shipmentResult);
+        if ($warningMessage === '') {
+            $warningMessage = $this->extractShipperWarningMessage($response);
         }
 
-        $response_body = \wp_remote_retrieve_body($response);
-        $response_body = isset($response_body) ? json_decode(wp_kses_post_deep($response_body), true) : [];
+        $parcels = isset($shipmentResult['parcels']) && is_array($shipmentResult['parcels'])
+            ? $shipmentResult['parcels']
+            : [];
+        $packageNumber = '';
 
-        $success = isset($response_body['result']['result'][0]['success']) ? (bool) $response_body['result']['result'][0]['success'] : false;
-
-        if (!$success) {
-            $error_message = isset($response_body['result']['result'][0]['messages'][0]['value']) ? $response_body['result']['result'][0]['messages'][0]['value'] : null;
-
-            if (!$error_message) {
-                $error_message = isset($response_body['result']['result'][0]['messages'][0]) ? $response_body['result']['result'][0]['messages'][0] : __('Something went wrong!', 'wc-dpd');
-            }
-
-            $error_message = apply_filters('wc_dpd_client_error_message', $error_message);
-
-            throw new Exception(esc_html($error_message), 400);
+        if (!empty($parcels[0]['parcelno'])) {
+            $packageNumber = sanitize_text_field((string) $parcels[0]['parcelno']);
         }
 
-        $label = isset($response_body['result']['result'][0]['label']) ? wp_kses_post($response_body['result']['result'][0]['label']) : '';
-        $mpsid = isset($response_body['result']['result'][0]['mpsid']) ? wp_kses_post($response_body['result']['result'][0]['mpsid']) : '';
-        $package_number = $mpsid ? substr($mpsid, 0, -8) : '';
+        $mpsId = !empty($shipmentResult['mpsId'])
+            ? sanitize_text_field((string) $shipmentResult['mpsId'])
+            : sanitize_text_field((string) ($shipmentResult['mpsid'] ?? ''));
+
+        if ($packageNumber === '' && $mpsId !== '') {
+            $packageNumber = $mpsId;
+        }
 
         return [
             Order::EXPORT_STATUS_META_KEY => self::RESPONSE_SUCCESS_STATUS,
-            Order::EXPORT_LABEL_URL_META_KEY => $label,
-            Order::EXPORT_MPSID_META_KEY => $mpsid,
-            Order::EXPORT_PACKAGE_NUMBER_META_KEY => $package_number,
+            Order::EXPORT_LABEL_URL_META_KEY => esc_url_raw((string) ($shipmentResult['label'] ?? '')),
+            Order::EXPORT_MPSID_META_KEY => $mpsId ?: $packageNumber,
+            Order::EXPORT_PACKAGE_NUMBER_META_KEY => $packageNumber,
+            Order::EXPORT_SHIPMENT_ID_META_KEY => $mpsId,
+            self::RESPONSE_WARNING_MESSAGE_KEY => $warningMessage,
         ];
     }
 
@@ -191,52 +202,272 @@ class Client
      */
     public function bulkDownloadLabels($package_numbers = [])
     {
+        return $this->bulkDownloadLabelsViaShipper($package_numbers);
+    }
+
+    private function bulkDownloadLabelsViaShipper($package_numbers = [])
+    {
+        $package_numbers = array_values(array_filter(array_map('sanitize_text_field', (array) $package_numbers)));
         if (empty($package_numbers)) {
             return false;
         }
 
-        $parcels = [];
-        foreach ($package_numbers as $package_number) {
-            $parcels[]['parcelno'] = $package_number;
-        }
-
-        $settings = DpdExportSettings::getDefaultSettings();
-
-        $data = [
+        $payload = [
             'jsonrpc' => '2.0',
             'method' => 'printLabels',
-            'params' => [
-                'DPDSecurity' => [
-                    'SecurityToken' => [
-                        'ClientKey' => $settings[DpdExportSettings::API_KEY_OPTION_KEY],
-                        'Email' =>  $settings[DpdExportSettings::EMAIL_OPTION_KEY],
-                    ],
-                ],
+            'params' => $this->buildShipperSecurityParams() + [
                 'label' => [
                     'parcels' => [
-                        'parcel' => $parcels
+                        'parcel' => array_map(static function ($packageNumber) {
+                            return ['parcelno' => $packageNumber];
+                        }, $package_numbers),
                     ],
-                    'pageSize' => $settings[DpdExportSettings::LABELS_FORMAT_OPTION_KEY],
-                    'position' => '1'
                 ],
-            ]
+            ],
+            'id' => 'printLabels',
         ];
 
-        $response = false;
+        $response = wp_remote_post(self::SHIPPER_URL, [
+            'timeout' => 45,
+            'headers' => [
+                'Accept' => 'application/pdf',
+                'Content-Type' => 'application/json',
+            ],
+            'body' => wp_json_encode($payload),
+        ]);
 
-        try {
-            $response = $this->call('post', "shipment/json", $data);
-        } catch (Exception $e) {
+        if (is_wp_error($response)) {
             return false;
         }
 
-        $response_body = \wp_remote_retrieve_body($response);
-        $success = $response_body && preg_match("/^%PDF-1./", $response_body) ? true : false;
+        $body = (string) wp_remote_retrieve_body($response);
+        $contentType = (string) wp_remote_retrieve_header($response, 'content-type');
 
-        if (!$success) {
-            return false;
+        if (str_contains(strtolower($contentType), 'application/pdf') && $body !== '') {
+            return $body;
         }
 
-        return $response_body;
+        return false;
+    }
+
+    private function callShipper(array $data = [], bool $logRequest = false): array
+    {
+        $response = wp_remote_post(self::SHIPPER_URL, [
+            'timeout' => 45,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ],
+            'body' => wp_json_encode($data),
+        ]);
+
+        if ($logRequest) {
+            ard_dpd_log('Shipper request log', [
+                'url' => self::SHIPPER_URL,
+                'data' => $data,
+                'response' => is_wp_error($response) ? $response->get_error_message() : wp_remote_retrieve_body($response),
+            ]);
+        }
+
+        if (is_wp_error($response)) {
+            throw new Exception(sprintf(__('Something went wrong: %s', 'ar-design-dpd'), $response->get_error_message()));
+        }
+
+        $statusCode = (int) wp_remote_retrieve_response_code($response);
+        $rawBody = (string) wp_remote_retrieve_body($response);
+        $decodedBody = json_decode($rawBody, true);
+
+        if (!is_array($decodedBody)) {
+            throw new Exception(__('DPD shipper API returned an invalid response.', 'ar-design-dpd'));
+        }
+
+        if ($statusCode >= 400) {
+            throw new Exception($this->extractShipperErrorMessage($decodedBody, $rawBody), $statusCode ?: 400);
+        }
+
+        return $decodedBody;
+    }
+
+    private function buildShipperSecurityParams(): array
+    {
+        $settings = DpdExportSettings::getDefaultSettings();
+        $apiKey = isset($settings[DpdExportSettings::API_KEY_OPTION_KEY]) ? sanitize_text_field((string) $settings[DpdExportSettings::API_KEY_OPTION_KEY]) : '';
+        $email = isset($settings[DpdExportSettings::EMAIL_OPTION_KEY]) ? sanitize_email((string) $settings[DpdExportSettings::EMAIL_OPTION_KEY]) : '';
+
+        if ($apiKey === '' || $email === '') {
+            throw new Exception(__('DPD SK shipper API is not fully configured. Please set login email and API key.', 'ar-design-dpd'));
+        }
+
+        return [
+            'DPDSecurity' => [
+                'SecurityToken' => [
+                    'ClientKey' => $apiKey,
+                    'Email' => $email,
+                ],
+            ],
+        ];
+    }
+
+    private function throwOnShipperErrors(array $response, array $shipmentResult = []): void
+    {
+        if (!empty($response['error'])) {
+            throw new Exception($this->extractShipperErrorMessage($response, __('DPD shipper API returned an error.', 'ar-design-dpd')));
+        }
+
+        if (isset($shipmentResult['success']) && !$shipmentResult['success']) {
+            throw new Exception($this->extractShipperErrorMessage($shipmentResult, __('DPD shipper API rejected the shipment.', 'ar-design-dpd')));
+        }
+    }
+
+    private function extractShipperErrorMessage(array $payload, string $fallback = ''): string
+    {
+        if (!empty($payload['error']) && is_array($payload['error'])) {
+            $message = sanitize_text_field((string) ($payload['error']['message'] ?? ''));
+            if ($message !== '') {
+                return $message;
+            }
+        }
+
+        if (!empty($payload['messages']) && is_array($payload['messages'])) {
+            $messages = array_filter(array_map(function ($message) {
+                return $this->normalizeShipperMessage($message);
+            }, $payload['messages']));
+
+            if ($messages !== []) {
+                return implode(' ', $messages);
+            }
+        }
+
+        if (!empty($payload['result']['result']) && is_array($payload['result']['result'])) {
+            foreach ($payload['result']['result'] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $message = $this->extractShipperErrorMessage($item);
+                if ($message !== '') {
+                    return $message;
+                }
+            }
+        }
+
+        return $fallback !== '' ? sanitize_text_field($fallback) : '';
+    }
+
+    private function extractShipperWarningMessage(array $payload): string
+    {
+        if (isset($payload['success']) && !$payload['success']) {
+            return '';
+        }
+
+        if (!empty($payload['messages']) && is_array($payload['messages'])) {
+            $messages = array_filter(array_map(function ($message) {
+                return $this->normalizeShipperMessage($message);
+            }, $payload['messages']));
+
+            if ($messages !== []) {
+                return implode(' ', $messages);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param mixed $message
+     */
+    private function normalizeShipperMessage($message): string
+    {
+        if (is_string($message) || is_numeric($message)) {
+            return sanitize_text_field((string) $message);
+        }
+
+        if (is_array($message)) {
+            $parts = [];
+
+            if (!empty($message['value'])) {
+                $parts[] = sanitize_text_field((string) $message['value']);
+            }
+
+            if (!empty($message['element'])) {
+                $parts[] = sprintf(
+                    /* translators: %s: invalid payload element */
+                    __('Element: %s', 'ar-design-dpd'),
+                    sanitize_text_field((string) $message['element'])
+                );
+            }
+
+            if (!empty($message['envelope'])) {
+                $parts[] = sprintf(
+                    /* translators: %s: payload envelope */
+                    __('Envelope: %s', 'ar-design-dpd'),
+                    sanitize_text_field((string) $message['envelope'])
+                );
+            }
+
+            if ($parts !== []) {
+                return implode(' | ', $parts);
+            }
+        }
+
+        return '';
+    }
+
+    private function persistLabelFile(string $labelContent, string $identifier = '', string $preferredExtension = 'pdf'): string
+    {
+        $binary = $this->decodeLabelContent($labelContent);
+        if ($binary === '') {
+            return '';
+        }
+
+        $uploadDir = wp_upload_dir();
+        if (!empty($uploadDir['error'])) {
+            return '';
+        }
+
+        $directory = trailingslashit($uploadDir['basedir']) . 'ar-design-dpd-labels';
+        if (!wp_mkdir_p($directory)) {
+            return '';
+        }
+
+        $safeIdentifier = sanitize_file_name($identifier ?: 'shipment');
+        $extension = strtolower($preferredExtension) === 'zpl' ? 'zpl' : 'pdf';
+        if (strpos($binary, '^XA') === 0) {
+            $extension = 'txt';
+        }
+
+        $filename = sprintf('%s-%s.%s', $safeIdentifier ?: 'shipment', gmdate('YmdHis'), $extension);
+        $filepath = trailingslashit($directory) . $filename;
+
+        if (file_put_contents($filepath, $binary) === false) {
+            return '';
+        }
+
+        return trailingslashit($uploadDir['baseurl']) . 'ar-design-dpd-labels/' . rawurlencode($filename);
+    }
+
+    private function decodeLabelContent(string $content): string
+    {
+        $content = trim($content);
+        if ($content === '') {
+            return '';
+        }
+
+        if (strpos($content, 'data:') === 0) {
+            $parts = explode(',', $content, 2);
+            if (count($parts) === 2) {
+                $decoded = base64_decode($parts[1], true);
+                if ($decoded !== false) {
+                    return $decoded;
+                }
+            }
+        }
+
+        $decoded = base64_decode($content, true);
+        if ($decoded !== false && $decoded !== '') {
+            return $decoded;
+        }
+
+        return $content;
     }
 }

@@ -1,6 +1,6 @@
 <?php return array(
     'root' => array(
-        'name' => 'webikon/wc-dpd',
+        'name' => 'webikon/ar-design-dpd',
         'pretty_version' => '1.0.0',
         'version' => '1.0.0.0',
         'reference' => null,
@@ -19,7 +19,7 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'webikon/wc-dpd' => array(
+        'webikon/ar-design-dpd' => array(
             'pretty_version' => '1.0.0',
             'version' => '1.0.0.0',
             'reference' => null,

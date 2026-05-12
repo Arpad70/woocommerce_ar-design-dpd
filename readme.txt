@@ -4,7 +4,7 @@ Tags: shipping, woocommerce, dpd
 Requires at least: 5.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.5.0
+Stable tag: 8.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,18 +17,23 @@ Pomocou pluginu si môžete vo svojich **Woocommerce objednávkach** vyberať zo
 
 Plugin je prepojený cez API riešenie k [www.dpdshipper.sk](https://www.dpdshipper.sk). Všetky objednávky vytvorené týmto pluginom si budete môcť prezerať aj v prehľade objednávok v online aplikácii [DPD Shipper](https://www.dpdshipper.sk/login).
 
+Aktuálny export zásielok používa **DPD SK shipper API**. Tracking synchronizácia používa **STATUSDATA** súbory z lokálneho adresára a voliteľne zo SFTP.
+
 Fork spravuje **AR Design**. Pôvodná integračná báza od **Webikon** ostáva uvedená v projekte ako coworker foundation.
+
+Pre ďalší vývoj v repozitári pozrite aj dokumenty **DEVELOPER_GUIDE.md** a **MAINTAINER_HANDOFF.md**.
 
 = FUNKCIE PLUGINU =
 
 * Jednoduché a rýchle vytváranie objednávok prepravy
 * Nastavenie predvoleného produktu na každú objednávku, napr. DPD Home
-* Tri možnosti exportovania objednávok do DPD
+* Export objednávok do DPD SK shipper API
 * Úprava objednávky pred exportovaním do DPD
 * Tlač prepravných štítkov vo formáte A4 alebo A6
 * Vytváranie objednávok doručenia do odberných miest Pickup a Pickup Station (samoobslužného boxu)
 * Možnosť pridania ďalších ID bankových účtov a zvozových adries
 * Použitie dvoch referencii na úrovni objednávky
+* Tracking synchronizácia cez STATUSDATA súbory a voliteľný SFTP download
 * Možnosť nastavenia dopravy zdarma
 * Možnosť nastavenia ceny dopravy podľa hmotností produktov v košíku.
 
@@ -48,10 +53,11 @@ Fork spravuje **AR Design**. Pôvodná integračná báza od **Webikon** ostáva
   * **ID adresy pre zber** - z [www.dpdshipper.sk](https://www.dpdshipper.sk) ->  Nastavenia -> Zvozové adresy -> hodnota z **ID adresy**
   * **Doprava** - produkt, ktorý štandardne používate pre odosielanie balíkov
   * **Notifikácie** - Zapnutie/Vypnutie oznámení pri vybraných produktoch prepravy
-4. Spôsob odosielania objednávok do portálu DPD Shipper
+4. Voliteľne nastavte tracking synchronizáciu cez **STATUSDATA directory** a prípadne SFTP prístup pre automatické sťahovanie STATUSDATA súborov
+5. Spôsob odosielania objednávok do portálu DPD Shipper
   * **Z detailu objednávky:** V detaile objednávky v bočnom paneli máte možnosť odoslať objednávku do API. Máte tam tiež možnosť zmeniť štandardné nastavenia pre aktuálnu objednávku (napr. zmena produktu)
   * **Hromadné odoslanie objednávok do DPD Shipper portálu:** V zozname objednávok si označíte objednávky na odoslanie a v hromadných akciách si vyberiete možnosť **DPD Hromadný Export**.
-5. Funkčnosť prepojenia si môžete **overiť vytvorením testovacej objednávky** a následným exportom
+6. Funkčnosť prepojenia si môžete **overiť vytvorením testovacej objednávky** a následným exportom
 
 == Screenshots ==
 1. Nastavenia pluginu
@@ -60,6 +66,13 @@ Fork spravuje **AR Design**. Pôvodná integračná báza od **Webikon** ostáva
 4. Zobrazenie možnosti exportu do DPD v detaile WooCommerce produktu
 
 == Changelog ==
+
+= 8.6.0 =
+* Documentation update for the current AR Design architecture.
+* Clarified that shipment export uses DPD SK shipper API.
+* Clarified that tracking synchronization uses STATUSDATA files and optional SFTP download.
+* Added repository documentation references for developers and maintainers.
+* Removed non-DPD carrier automation. Those carrier integrations now live in separate fix modules.
 
 = 8.5.0 (AR Design fork) =
 * Initial AR Design standalone fork of the original DPD plugin.
@@ -74,7 +87,7 @@ Fork spravuje **AR Design**. Pôvodná integračná báza od **Webikon** ostáva
 * Added free shipping threshold option for weight-based shipping rates
 
 = 8.3.0 =
-* Extended locker filtering to support Z-Box (Packeta)
+* Extended locker filtering to support Z-Box
 * Added admin validation to ensure at least one pickup point type (shops or lockers) remains enabled
 * Improved shipping method configuration safety with client-side and server-side validation
 

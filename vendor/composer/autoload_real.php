@@ -29,11 +29,11 @@ class ComposerAutoloaderInit50bfb811ec9a6667e574b1e439faa1bf
         spl_autoload_unregister(array('ComposerAutoloaderInit50bfb811ec9a6667e574b1e439faa1bf', 'loadClassLoader'));
 
         require __DIR__ . '/autoload_static.php';
-        call_user_func(\Composer\Autoload\ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf::getInitializer($loader));
+        call_user_func(\Composer\Autoload\ComposerStaticInitArDesignDpd811ec9a6667e574b1e439faa1bf::getInitializer($loader));
 
         $loader->register(true);
 
-        $filesToLoad = \Composer\Autoload\ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf::$files;
+        $filesToLoad = \Composer\Autoload\ComposerStaticInitArDesignDpd811ec9a6667e574b1e439faa1bf::$files;
         $requireFile = \Closure::bind(static function ($fileIdentifier, $file) {
             if (empty($GLOBALS['__composer_autoload_files'][$fileIdentifier])) {
                 $GLOBALS['__composer_autoload_files'][$fileIdentifier] = true;

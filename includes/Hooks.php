@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -12,6 +12,7 @@ class Hooks
     public static function init()
     {
         add_filter('wc_dpd_client_error_message', [__CLASS__, 'clearClientErrorMessageCharacters'], 10, 1);
+        add_filter('ard_dpd_client_error_message', [__CLASS__, 'clearClientErrorMessageCharacters'], 10, 1);
     }
 
     public static function clearClientErrorMessageCharacters($message)

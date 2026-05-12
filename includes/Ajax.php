@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 use Exception;
 
@@ -11,10 +11,15 @@ defined('ABSPATH') || exit;
  */
 class Ajax
 {
+    private const LEGACY_NONCE_ACTION = 'wc-dpd-parcelshop';
+    private const NONCE_ACTION = 'ar-design-dpd-parcelshop';
+
     public static function init()
     {
         add_action('wp_ajax_wc_dpd_update_chosen_parcelshop', [__CLASS__, 'updateChosenParcelShop']);
         add_action('wp_ajax_nopriv_wc_dpd_update_chosen_parcelshop', [__CLASS__, 'updateChosenParcelShop']);
+        add_action('wp_ajax_ard_dpd_update_chosen_parcelshop', [__CLASS__, 'updateChosenParcelShop']);
+        add_action('wp_ajax_nopriv_ard_dpd_update_chosen_parcelshop', [__CLASS__, 'updateChosenParcelShop']);
 
         if (is_map_widget_enabled()) {
             return;
@@ -22,6 +27,29 @@ class Ajax
 
         add_action('wp_ajax_wc_dpd_parcelshop_search', [__CLASS__, 'parcelShopSearch']);
         add_action('wp_ajax_nopriv_wc_dpd_parcelshop_search', [__CLASS__, 'parcelShopSearch']);
+        add_action('wp_ajax_ard_dpd_parcelshop_search', [__CLASS__, 'parcelShopSearch']);
+        add_action('wp_ajax_nopriv_ard_dpd_parcelshop_search', [__CLASS__, 'parcelShopSearch']);
+    }
+
+    private static function verifyNonce(): bool
+    {
+        $nonce = isset($_REQUEST['wp_nonce']) ? (string) wp_unslash($_REQUEST['wp_nonce']) : '';
+
+        return '' !== $nonce && (
+            wp_verify_nonce($nonce, self::NONCE_ACTION) ||
+            wp_verify_nonce($nonce, self::LEGACY_NONCE_ACTION)
+        );
+    }
+
+    private static function requestField(array $keys)
+    {
+        foreach ($keys as $key) {
+            if (isset($_POST[$key])) {
+                return wp_unslash($_POST[$key]);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -31,19 +59,20 @@ class Ajax
      */
     public static function parcelShopSearch()
     {
-        // Check nonce value.
-        check_ajax_referer('wc-dpd-parcelshop', 'wp_nonce');
+        if (!self::verifyNonce()) {
+            wp_send_json_error(['message' => __('Security check failed.', 'ar-design-dpd')], 403);
+        }
 
-        $city = !empty($_REQUEST['city']) ? (string) wp_kses_post($_REQUEST['city']) : '';
-        $zip = !empty($_REQUEST['zip']) ? (int) filter_var(wp_kses_post($_REQUEST['zip']), FILTER_SANITIZE_NUMBER_INT) : '';
-        $country = !empty($_REQUEST['country']) ? (string) wp_kses_post($_REQUEST['country']) : '';
+        $city = !empty($_REQUEST['city']) ? (string) wp_kses_post(wp_unslash($_REQUEST['city'])) : '';
+        $zip = !empty($_REQUEST['zip']) ? (int) filter_var(wp_kses_post(wp_unslash($_REQUEST['zip'])), FILTER_SANITIZE_NUMBER_INT) : '';
+        $country = !empty($_REQUEST['country']) ? (string) wp_kses_post(wp_unslash($_REQUEST['country'])) : '';
 
         if (
             !$city ||
             !$zip ||
             !$country
         ) {
-            wp_send_json_error(['message' => __('Please fill all the required fields.', 'wc-dpd')]);
+            wp_send_json_error(['message' => __('Please fill all the required fields.', 'ar-design-dpd')]);
         }
 
         try {
@@ -69,11 +98,11 @@ class Ajax
                 $parcelshops[$key]['country']['name'] = $country_name;
             }
 
-            $parcelshops = apply_filters('wc_dpd_parcelshops_search', $parcelshops);
+            $parcelshops = ard_dpd_apply_filters('wc_dpd_parcelshops_search', 'ard_dpd_parcelshops_search', $parcelshops);
 
             wp_send_json_success(['parcelshops' => $parcelshops]);
         } catch (Exception $e) {
-            wp_send_json_error(['message' => __('No parcelshops was found. Try changing the input values and search again.', 'wc-dpd')]);
+            wp_send_json_error(['message' => __('No parcelshops was found. Try changing the input values and search again.', 'ar-design-dpd')]);
         }
 
         die();
@@ -86,22 +115,23 @@ class Ajax
      */
     public static function updateChosenParcelShop()
     {
-        // Check nonce value.
-        check_ajax_referer('wc-dpd-parcelshop', 'wp_nonce');
+        if (!self::verifyNonce()) {
+            wp_send_json_error(['message' => __('Security check failed.', 'ar-design-dpd')], 403);
+        }
 
-        $parcelshop_id = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY]) ? (int) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY]) : '';
-        $parcelshop_pus_id = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY]) : '';
-        $parcelshop_name = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY]) : '';
-        $parcelshop_street = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY]) : '';
-        $parcelshop_zip = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY]) : '';
-        $parcelshop_city = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY]) : '';
-        $parcelshop_country_code = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY]) : '';
-        $parcelshop_max_weight = !empty($_POST[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY]) ? (int) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY]) : '';
-        $parcelshop_cod = isset($_POST[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY]) : '';
-        $parcelshop_card = isset($_POST[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY]) : '';
-        $parcelshop_is_alzabox_eligible = isset($_POST[DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY]) : '';
-        $parcelshop_is_slovenska_posta_eligible = isset($_POST[DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY]) : '';
-        $parcelshop_is_zbox_eligible = isset($_POST[DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY]) ? (string) wp_kses_post($_POST[DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY]) : '';
+        $parcelshop_id = (int) filter_var((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY, 'ard_dpd_parcelshop_id']) ?? ''), FILTER_SANITIZE_NUMBER_INT);
+        $parcelshop_pus_id = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY, 'ard_dpd_parcelshop_pus_id']) ?? ''));
+        $parcelshop_name = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY, 'ard_dpd_parcelshop_name']) ?? ''));
+        $parcelshop_street = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY, 'ard_dpd_parcelshop_street']) ?? ''));
+        $parcelshop_zip = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY, 'ard_dpd_parcelshop_zip']) ?? ''));
+        $parcelshop_city = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY, 'ard_dpd_parcelshop_city']) ?? ''));
+        $parcelshop_country_code = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY, 'ard_dpd_parcelshop_country_code']) ?? ''));
+        $parcelshop_max_weight = (int) filter_var((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY, 'ard_dpd_parcelshop_max_weight']) ?? ''), FILTER_SANITIZE_NUMBER_INT);
+        $parcelshop_cod = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY, 'ard_dpd_parcelshop_cod']) ?? ''));
+        $parcelshop_card = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY, 'ard_dpd_parcelshop_card']) ?? ''));
+        $parcelshop_is_alzabox_eligible = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY, 'ard_dpd_parcelshop_is_alzabox_eligible']) ?? ''));
+        $parcelshop_is_slovenska_posta_eligible = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY, 'ard_dpd_parcelshop_is_slovenska_posta_eligible']) ?? ''));
+        $parcelshop_is_zbox_eligible = (string) wp_kses_post((string) (self::requestField([DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY, 'ard_dpd_parcelshop_is_zbox_eligible']) ?? ''));
 
         $chosen_parcelshop_data = [
             DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY => $parcelshop_id,

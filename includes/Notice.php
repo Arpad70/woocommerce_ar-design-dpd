@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 

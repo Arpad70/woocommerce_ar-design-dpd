@@ -38,7 +38,7 @@ Výstup lokálne:
 
 ### Varianta A: branch + PR
 
-1. Vytvor branch, napr. `release/8.5.1`.
+1. Vytvor branch, napr. `release/8.6.1`.
 2. Commitni release súbory (`VERSION`, `CHANGELOG.md`, `ar-design-dpd.php`) + súvisiace zmeny.
 3. Pushni branch na GitHub.
 4. `auto-pr-version.yml` má vytvoriť PR automaticky.

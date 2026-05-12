@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -18,7 +18,7 @@ class OrderList
 
         add_action('admin_init', [__CLASS__, 'maybeExportSingleOrder']);
 
-        if (wc_dpd_is_hpos_enabled()) {
+        if (ard_dpd_is_hpos_enabled()) {
             add_filter('manage_woocommerce_page_wc-orders_columns', [__CLASS__, 'addOrdersGridDPDExportColumn']);
             add_action('manage_woocommerce_page_wc-orders_custom_column', [__CLASS__, 'addOrderByDPDExportColumn'], 10, 2);
             add_action('bulk_actions-woocommerce_page_wc-orders', [__CLASS__, 'addBulkActions'], 10, 1);
@@ -40,8 +40,8 @@ class OrderList
      */
     public static function addBulkActions($bulk_actions)
     {
-        $bulk_actions[self::BULK_EXPORT_ORDERS_KEY] = __('DPD Bulk Export', 'wc-dpd');
-        $bulk_actions[self::BULK_DOWNLOAD_LABELS_KEY] = __('DPD Bulk Download Labels', 'wc-dpd');
+        $bulk_actions[self::BULK_EXPORT_ORDERS_KEY] = __('DPD Bulk Export', 'ar-design-dpd');
+        $bulk_actions[self::BULK_DOWNLOAD_LABELS_KEY] = __('DPD Bulk Download Labels', 'ar-design-dpd');
 
         return $bulk_actions;
     }
@@ -89,7 +89,7 @@ class OrderList
             $new_columns[$column_name] = $column_info;
 
             if ('order_status' === $column_name) {
-                $new_columns[DpdExportSettings::SETTINGS_ID_KEY] = __('Export to DPD', 'wc-dpd');
+                $new_columns[DpdExportSettings::SETTINGS_ID_KEY] = __('Export to DPD', 'ar-design-dpd');
             }
         }
 
@@ -123,7 +123,7 @@ class OrderList
         $dpd_export_result = $order->get_meta(Order::EXPORT_STATUS_META_KEY, true);
 
         if (!$dpd_export_result) {
-            echo '<p><a class="button" href="' . esc_url(add_query_arg(self::EXPORT_ORDER_KEY, $order->get_id())) . '">' . __('Export', 'wc-dpd') . '</a></p>';
+            echo '<p><a class="button" href="' . esc_url(add_query_arg(self::EXPORT_ORDER_KEY, $order->get_id())) . '">' . __('Export', 'ar-design-dpd') . '</a></p>';
 
             return;
         }
@@ -133,11 +133,11 @@ class OrderList
             $dpd_package_number = wp_kses_post($order->get_meta(Order::EXPORT_PACKAGE_NUMBER_META_KEY, true));
 
             if ($dpd_label_url) {
-                echo '<p><a class="button" href="' . esc_url($dpd_label_url) . '">' . __('Download label', 'wc-dpd') . '</a></p>';
+                echo '<p><a class="button" href="' . esc_url($dpd_label_url) . '">' . __('Download label', 'ar-design-dpd') . '</a></p>';
             }
 
             if ($dpd_package_number) {
-                echo '<p style="font-size: 12px; margin-top: 5px;">' . __('Package number', 'wc-dpd') . ':<br><strong>' . $dpd_package_number . '</strong></p>';
+                echo '<p style="font-size: 12px; margin-top: 5px;">' . __('Package number', 'ar-design-dpd') . ':<br><strong>' . $dpd_package_number . '</strong></p>';
             }
         }
 
@@ -156,7 +156,7 @@ class OrderList
         $order_id = !empty($_GET[self::EXPORT_ORDER_KEY]) ? (int) $_GET[self::EXPORT_ORDER_KEY] : null;
 
         if (!$order_id) {
-            Notice::error(sprintf(__('Wrong order ID %d', 'wc-dpd'), $order_id));
+            Notice::error(sprintf(__('Wrong order ID %d', 'ar-design-dpd'), $order_id));
 
             return;
         }

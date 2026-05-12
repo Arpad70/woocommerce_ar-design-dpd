@@ -12,39 +12,39 @@ $parcelshop_country_code = isset($parcelshop_country_code) ? (string) $parcelsho
 
 ?>
 
-<div class="wc-dpd-chosen-parcelshop" <?php echo $type == 'admin' ? ' style="width: 100%; display: block;"' : ''; ?>>
+<div class="ar-design-dpd-chosen-parcelshop" <?php echo $type == 'admin' ? ' style="width: 100%; display: block;"' : ''; ?>>
 	<p>
-		<strong><?php echo __('Chosen Parcelshop', 'wc-dpd'); ?></strong>:<br>
+		<strong><?php echo __('Chosen Parcelshop', 'ar-design-dpd'); ?></strong>:<br>
 
 		<?php if ($type == 'admin') : ?>
 			<?php if ($parcelshop_id) : ?>
-				<strong><?php echo __('Parcelshop ID', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_id); ?><br>
+				<strong><?php echo __('Parcelshop ID', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_id); ?><br>
 			<?php endif; ?>
 
 			<?php if ($parcelshop_pus_id) : ?>
-				<strong><?php echo __('Parcelshop PUS ID', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_pus_id); ?><br>
+				<strong><?php echo __('Parcelshop PUS ID', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_pus_id); ?><br>
 			<?php endif; ?>
 
 			<?php if ($parcelshop_name) : ?>
-				<strong><?php echo __('Parcelshop name', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_name); ?><br>
+				<strong><?php echo __('Parcelshop name', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_name); ?><br>
 			<?php endif; ?>
 
 			<?php if ($parcelshop_street) : ?>
-				<strong><?php echo __('Parcelshop street', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_street); ?><br>
+				<strong><?php echo __('Parcelshop street', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_street); ?><br>
 			<?php endif; ?>
 
 			<?php if ($parcelshop_zip) : ?>
-				<strong><?php echo __('Parcelshop zip', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_zip); ?><br>
+				<strong><?php echo __('Parcelshop zip', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_zip); ?><br>
 			<?php endif; ?>
 
 			<?php if ($parcelshop_city) : ?>
-				<strong><?php echo __('Parcelshop city', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_city); ?><br>
+				<strong><?php echo __('Parcelshop city', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_city); ?><br>
 			<?php endif; ?>
 
 			<?php if ($parcelshop_country_name) : ?>
-				<strong><?php echo __('Parcelshop country', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_country_name); ?>
+				<strong><?php echo __('Parcelshop country', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_country_name); ?>
 			<?php elseif ($parcelshop_country_code) : ?>
-				<strong><?php echo __('Parcelshop country code', 'wc-dpd'); ?></strong>: <?php echo esc_html($parcelshop_country_code); ?>
+				<strong><?php echo __('Parcelshop country code', 'ar-design-dpd'); ?></strong>: <?php echo esc_html($parcelshop_country_code); ?>
 			<?php endif; ?>
 		<?php else : ?>
 			<?php if ($parcelshop_name) : ?>

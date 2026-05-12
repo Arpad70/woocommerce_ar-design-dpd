@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -20,9 +20,12 @@ class Order
     public const EXPORT_STATUS_META_KEY = 'dpd_export_status';
     public const EXPORT_SUCCESS_STATUS = 'success';
     public const EXPORT_FAILED_STATUS = 'failed';
+    public const EXPORT_LAST_ERROR_META_KEY = 'dpd_export_last_error';
     public const EXPORT_LABEL_URL_META_KEY = 'dpd_export_label_url';
     public const EXPORT_PACKAGE_NUMBER_META_KEY = 'dpd_export_package_number';
     public const EXPORT_MPSID_META_KEY = 'dpd_export_mpsid';
+    public const EXPORT_SHIPMENT_ID_META_KEY = 'dpd_export_shipment_id';
+    public const EXPORT_LAST_WARNING_META_KEY = 'dpd_export_last_warning';
 
     public static function init()
     {
@@ -39,7 +42,7 @@ class Order
      *
      * @return bool
      */
-    public static function export($order_id = 0)
+    public static function export(int $order_id = 0): bool
     {
         if (!$order_id) {
             return false;
@@ -52,7 +55,7 @@ class Order
         }
 
         if (!self::canExportOrder($order)) {
-            Notice::error(sprintf(__('Order %d is already exported to DPD.', 'wc-dpd'), $order_id));
+            Notice::error(sprintf(__('Order %d is already exported to DPD.', 'ar-design-dpd'), $order_id));
 
             return false;
         }
@@ -60,7 +63,7 @@ class Order
         try {
             $data = self::getOrderExportData($order);
 
-            do_action('wc_dpd_before_order_export', $order, $data);
+            ard_dpd_do_action('wc_dpd_before_order_export', 'ard_dpd_before_order_export', $order, $data);
 
             $response = DpdExport::doExport($data, $order);
 
@@ -68,23 +71,42 @@ class Order
             $order->update_meta_data(Order::EXPORT_PACKAGE_NUMBER_META_KEY, $response[Order::EXPORT_PACKAGE_NUMBER_META_KEY]);
             $order->update_meta_data(Order::EXPORT_MPSID_META_KEY, $response[Order::EXPORT_MPSID_META_KEY]);
             $order->update_meta_data(Order::EXPORT_STATUS_META_KEY, $response[Order::EXPORT_STATUS_META_KEY]);
+            $order->delete_meta_data(Order::EXPORT_LAST_ERROR_META_KEY);
+            if (isset($response[Order::EXPORT_SHIPMENT_ID_META_KEY])) {
+                $order->update_meta_data(Order::EXPORT_SHIPMENT_ID_META_KEY, $response[Order::EXPORT_SHIPMENT_ID_META_KEY]);
+            }
+            if (!empty($response[Client::RESPONSE_WARNING_MESSAGE_KEY])) {
+                $order->update_meta_data(Order::EXPORT_LAST_WARNING_META_KEY, $response[Client::RESPONSE_WARNING_MESSAGE_KEY]);
+            } else {
+                $order->delete_meta_data(Order::EXPORT_LAST_WARNING_META_KEY);
+            }
             $order->save_meta_data();
 
-            $message = sprintf(__('Order %d was successfully exported', 'wc-dpd'), $order_id);
+            $message = sprintf(__('Order %d was successfully exported', 'ar-design-dpd'), $order_id);
 
             Notice::success($message);
             $order->add_order_note(Notice::PREFIX . $message);
 
-            do_action('wc_dpd_after_order_export', $order, $response);
+            if (!empty($response[Client::RESPONSE_WARNING_MESSAGE_KEY])) {
+                $warning_message = sanitize_text_field((string) $response[Client::RESPONSE_WARNING_MESSAGE_KEY]);
+                Notice::add($warning_message, 'warning');
+                $order->add_order_note(Notice::PREFIX . $warning_message);
+            }
+
+            ard_dpd_do_action('wc_dpd_after_order_export', 'ard_dpd_after_order_export', $order, $response);
 
             return true;
         } catch (\Exception $e) {
             $message = esc_html($e->getMessage());
 
+            $order->update_meta_data(self::EXPORT_STATUS_META_KEY, self::EXPORT_FAILED_STATUS);
+            $order->update_meta_data(self::EXPORT_LAST_ERROR_META_KEY, $message);
+            $order->save_meta_data();
+
             Notice::error($message);
             $order->add_order_note(Notice::PREFIX . $message);
 
-            do_action('wc_dpd_order_export_error', $order, $e);
+            ard_dpd_do_action('wc_dpd_order_export_error', 'ard_dpd_order_export_error', $order, $e);
 
             return false;
         }
@@ -97,7 +119,7 @@ class Order
      *
      * @return void
      */
-    public static function reset($order_id)
+    public static function reset(int $order_id)
     {
         $order = wc_get_order($order_id);
 
@@ -109,9 +131,12 @@ class Order
         $order->delete_meta_data(Order::EXPORT_PACKAGE_NUMBER_META_KEY);
         $order->delete_meta_data(Order::EXPORT_MPSID_META_KEY);
         $order->delete_meta_data(Order::EXPORT_STATUS_META_KEY);
+        $order->delete_meta_data(Order::EXPORT_LAST_ERROR_META_KEY);
+        $order->delete_meta_data(Order::EXPORT_LAST_WARNING_META_KEY);
+        $order->delete_meta_data(Order::EXPORT_SHIPMENT_ID_META_KEY);
         $order->save_meta_data();
 
-        $message = sprintf(__('Order %d export data was successfully reset', 'wc-dpd'), $order_id);
+        $message = sprintf(__('Order %d export data was successfully reset', 'ar-design-dpd'), $order_id);
 
         Notice::success($message);
 
@@ -139,7 +164,7 @@ class Order
         // Throw error if full name is longer than 35 characters
         $full_name_allowed_length = 35;
         if (strlen($full_name) > $full_name_allowed_length) {
-            throw new \Exception(sprintf(__('Full name %s is longer than %d characters. Please shorten it.', 'wc-dpd'), $full_name, $full_name_allowed_length));
+            throw new \Exception(sprintf(__('Full name %s is longer than %d characters. Please shorten it.', 'ar-design-dpd'), $full_name, $full_name_allowed_length));
         }
 
         $billing_company = $order->get_billing_company();
@@ -150,7 +175,7 @@ class Order
         if ($company) {
             // Throw error if company name is longer than 35 characters
             if (strlen($company) > $company_allowed_length) {
-                throw new \Exception(sprintf(__('Company name %s is longer than %d characters. Please shorten it.', 'wc-dpd'), $company, $company_allowed_length));
+                throw new \Exception(sprintf(__('Company name %s is longer than %d characters. Please shorten it.', 'ar-design-dpd'), $company, $company_allowed_length));
             }
 
             $shipment_type = 'b2b';
@@ -189,20 +214,25 @@ class Order
         $customer_note = $order->get_customer_note();
         $order_price = $order->get_total();
         $order_currency = $order->get_currency();
-        $shipping_method = $order->get_shipping_method();
+        $shipping_method = '';
+        $order_shipping_methods = $order->get_shipping_methods();
+        $first_shipping_method = reset($order_shipping_methods);
+        if ($first_shipping_method && is_callable([$first_shipping_method, 'get_method_id'])) {
+            $shipping_method = (string) $first_shipping_method->get_method_id();
+        }
         $payment_method = $order->get_payment_method();
         $order_pickup_date = self::getPickupDate();
-        $shipping = $order->get_meta(self::SHIPPING_META_KEY, true);
         $parcelshop_id = 0;
         $parcelshop_pus_id = 0;
+        $parcelshop_cod_allowed = '';
 
         // If order has parcel shipping selected, change settings
         $has_parcelshop_shipping = Order::hasParcelShpping($order);
         if ($has_parcelshop_shipping) {
-            $shipping = '17';
             $shipment_type = 'psd';
             $parcelshop_id = $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY, true);
             $parcelshop_pus_id = $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY, true);
+            $parcelshop_cod_allowed = $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY, true);
         }
 
         $bank_id = sanitize_text_field($order->get_meta(self::BANK_ID_META_KEY, true));
@@ -237,8 +267,8 @@ class Order
             DpdExport::ORDER_SHIPPING_METHOD_KEY => $shipping_method,
             DpdExport::ORDER_PARCELSHOP_ID => $parcelshop_id,
             DpdExport::ORDER_PARCELSHOP_PUS_ID => $parcelshop_pus_id,
+            DpdExport::ORDER_PARCELSHOP_COD_ALLOWED_KEY => $parcelshop_cod_allowed,
             DpdExport::ORDER_PICKUP_DATE_KEY => $order_pickup_date,
-            DpdExportSettings::SHIPPING_OPTION_KEY => $shipping,
             DpdExportSettings::ADDRESS_ID_OPTION_KEY => $address_id,
             DpdExportSettings::BANK_ID_OPTION_KEY => $bank_id,
             DpdExportSettings::NOTIFICATION_OPTION_KEY => $notification,
@@ -248,11 +278,11 @@ class Order
     /**
      * Check if order can be exported to DPD
      *
-     * @param int $order_id
+    * @param \WC_Order $order
      *
      * @return bool
      */
-    public static function canExportOrder($order)
+    public static function canExportOrder(\WC_Order $order): bool
     {
         $export_status = $order->get_meta(self::EXPORT_STATUS_META_KEY, true);
 
@@ -266,11 +296,11 @@ class Order
     /**
      * Save parcelshop fields to the order
      *
-     * @param int $order_id
+    * @param int|\WP_REST_Request $order_id
      *
      * @return void
      */
-    public static function saveParcelShopShippingMethodFieldsToOrder($order_id)
+    public static function saveParcelShopShippingMethodFieldsToOrder(mixed $order_id)
     {
         // Get posted data either from $_POST, WP_REST_Request, or order object
         $posted_data = [];
@@ -288,7 +318,13 @@ class Order
                 DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY,
                 DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY,
                 DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY,
-                DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY
+                DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY,
             ];
 
             foreach ($dpd_fields as $field) {
@@ -323,13 +359,19 @@ class Order
 
                     if (!empty($chosen_parcelshop)) {
                         // Update the mapping to match the actual session data keys
-                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] = $chosen_parcelshop['wc_dpd_parcelshop_id'] ?? '';
-                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] = $chosen_parcelshop['wc_dpd_parcelshop_pus_id'] ?? '';
-                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY] = $chosen_parcelshop['wc_dpd_parcelshop_name'] ?? '';
-                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY] = $chosen_parcelshop['wc_dpd_parcelshop_street'] ?? '';
-                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY] = $chosen_parcelshop['wc_dpd_parcelshop_zip'] ?? '';
-                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY] = $chosen_parcelshop['wc_dpd_parcelshop_city'] ?? '';
-                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY] = $chosen_parcelshop['wc_dpd_parcelshop_country_code'] ?? '';
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_id'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_pus_id'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_name'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_street'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_zip'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_city'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_country_code'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_max_weight'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_cod'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_card'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_is_alzabox_eligible'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_is_slovenska_posta_eligible'] ?? '');
+                        $posted_data[DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY] = $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_is_zbox_eligible'] ?? '');
                     }
                 }
             }
@@ -363,7 +405,13 @@ class Order
             DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY => 'sanitize_text_field',
             DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY => 'sanitize_text_field',
             DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY => 'sanitize_text_field'
+            DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY => 'sanitize_text_field',
         ];
 
         foreach ($fields_to_save as $meta_key => $sanitize_callback) {
@@ -436,7 +484,7 @@ class Order
         $countries = (array) WC()->countries->get_allowed_countries();
         $parcelshop_country_name = isset($countries[strtoupper($parcelshop_country_code)]) ? (string) $countries[strtoupper($parcelshop_country_code)] : '';
 
-        return include_template('chosen-parcelshop-order-data.php', [
+        return ard_dpd_include_template('chosen-parcelshop-order-data.php', [
             'type' => $type,
             'parcelshop_id' => $parcelshop_id,
             'parcelshop_pus_id' => $parcelshop_pus_id,
@@ -481,7 +529,7 @@ class Order
     public static function bulkDownloadLabels($order_ids = [])
     {
         if (empty($order_ids)) {
-            Notice::error('You have to select at least one order.');
+            Notice::error(__('Please select at least one order.', 'ar-design-dpd'));
 
             return false;
         }
@@ -498,7 +546,7 @@ class Order
             $package_number = wp_kses_post($order->get_meta(self::EXPORT_PACKAGE_NUMBER_META_KEY, true));
 
             if (!$package_number) {
-                Notice::error(sprintf(__('Order %d does not have the package number and its label couldn\'t be printed.', 'wc-dpd'), $order_id));
+                Notice::error(sprintf(__('Order %d does not have the package number and its label couldn\'t be printed.', 'ar-design-dpd'), $order_id));
 
                 continue;
             }
@@ -508,7 +556,13 @@ class Order
         }
 
         if (empty($package_numbers)) {
-            Notice::error(sprintf(__('None of your selected orders have a package number.', 'wc-dpd'), $order_id));
+            Notice::error(sprintf(__('None of your selected orders have a package number.', 'ar-design-dpd'), $order_id));
+
+            return false;
+        }
+
+        if (count($package_numbers) > 1) {
+            Notice::error(__('DPD label download currently supports one shipment label at a time. Please select a single exported DPD order.', 'ar-design-dpd'));
 
             return false;
         }
@@ -517,7 +571,7 @@ class Order
         $pdf_content = $client->bulkDownloadLabels($package_numbers);
 
         if (!$pdf_content) {
-            Notice::error(sprintf(__('Something went wrong and the pdf content is not valid. Please check orders %s if the package numbers are correct.', 'wc-dpd'), implode(', ', $processing_order_ids)));
+            Notice::error(sprintf(__('Something went wrong and the PDF content is not valid. Please check orders %s and verify that the package numbers are correct.', 'ar-design-dpd'), implode(', ', $processing_order_ids)));
 
             return false;
         }

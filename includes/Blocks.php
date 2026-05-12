@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -69,17 +69,17 @@ class Blocks
                     $parcelshop_name = $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY);
 
                     if (empty($parcelshop_pus_id) && empty($parcelshop_name)) {
-                        throw new \Exception(__("You have to choose a parcelshop.", "wc-dpd"));
+                        throw new \Exception(__("You have to choose a parcelshop.", "ar-design-dpd"));
                     }
                 } else {
                     // Validate session data completeness using the correct field names
                     $required_fields = [
-                        DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY => __("Parcel shop ID is required.", "wc-dpd"),
-                        DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY => __("Parcel shop name is required.", "wc-dpd"),
-                        DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY => __("Parcel shop street is required.", "wc-dpd"),
-                        DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY => __("Parcel shop ZIP code is required.", "wc-dpd"),
-                        DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY => __("Parcel shop city is required.", "wc-dpd"),
-                        DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY => __("Parcel shop country code is required.", "wc-dpd")
+                        DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY => __("Parcel shop ID is required.", "ar-design-dpd"),
+                        DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY => __("Parcel shop name is required.", "ar-design-dpd"),
+                        DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY => __("Parcel shop street is required.", "ar-design-dpd"),
+                        DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY => __("Parcel shop ZIP code is required.", "ar-design-dpd"),
+                        DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY => __("Parcel shop city is required.", "ar-design-dpd"),
+                        DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY => __("Parcel shop country code is required.", "ar-design-dpd")
                     ];
 
                     foreach ($required_fields as $field => $error_message) {
@@ -106,7 +106,7 @@ class Blocks
         $template_data = Shipping::prepareParcelshopTemplateData($chosen_parcelshop_data);
 
         ob_start();
-        echo include_template('parcelshop-shipping-method-content.php', $template_data);
+        echo ard_dpd_include_template('parcelshop-shipping-method-content.php', $template_data);
         $content = ob_get_clean();
 
         // Return the raw content

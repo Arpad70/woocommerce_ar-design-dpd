@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -15,11 +15,15 @@ class Core
     public static function init()
     {
         // Initialize classes
+        DpdExportSettings::init();
         Assets::init();
         Ajax::init();
+        \ArDesign\DPD\Automation::init();
         Notice::init();
         Shipping::init();
         Order::init();
+        \ArDesign\DPD\Shipment::init();
+        \ArDesign\DPD\Tracking::init();
         OrderMetabox::init();
         OrderList::init();
         Email::init();
@@ -34,9 +38,9 @@ class Core
     {
         add_action('after_setup_theme', function () {
             load_plugin_textdomain(
-                'wc-dpd',
+                AR_DESIGN_DPD_TEXT_DOMAIN,
                 false,
-                dirname(plugin_basename(WCDPD_PLUGIN_INDEX)) . DIRECTORY_SEPARATOR . 'languages'
+                dirname(plugin_basename(AR_DESIGN_DPD_PLUGIN_INDEX)) . DIRECTORY_SEPARATOR . 'languages'
             );
         });
     }

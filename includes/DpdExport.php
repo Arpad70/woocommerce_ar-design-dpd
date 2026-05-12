@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 use Exception;
 use League\ISO3166\ISO3166;
@@ -30,6 +30,7 @@ class DpdExport
     public const ORDER_HAS_PARCELSHOP_SHIPPING_KEY = 'dpd_order_has_parcelshop_shipping';
     public const ORDER_PARCELSHOP_ID = 'dpd_order_shipping_parcelshop_id';
     public const ORDER_PARCELSHOP_PUS_ID = 'dpd_order_shipping_parcelshop_pus_id';
+    public const ORDER_PARCELSHOP_COD_ALLOWED_KEY = 'dpd_order_shipping_parcelshop_cod_allowed';
     public const ORDER_NOTE_KEY = 'dpd_order_note';
     public const ORDER_PACKAGE_WEIGHT_KEY = 'dpd_package_weight';
     public const ORDER_REFERENCE_1_KEY = 'dpd_reference_1';
@@ -56,6 +57,7 @@ class DpdExport
     public $dpd_order_has_parcelshop_shipping = '';
     public $dpd_order_shipping_parcelshop_id = '';
     public $dpd_order_shipping_parcelshop_pus_id = '';
+    public $dpd_order_shipping_parcelshop_cod_allowed = '';
     public $dpd_order_price = '';
     public $dpd_order_currency = '';
     public $dpd_order_note = '';
@@ -63,13 +65,16 @@ class DpdExport
     public $dpd_reference_2 = '';
     public $dpd_package_weight = '';
     public $dpd_order_pickup_date = '';
-    public $dpd_api_key;
-    public $dpd_api_email;
-    public $dpd_delis_id;
-    public $dpd_address_id;
-    public $dpd_bank_id;
-    public $dpd_shipping = 0;
+    public ?string $dpd_api_key;
+    public ?string $dpd_api_email;
+    public ?string $dpd_delis_id;
+    public ?string $dpd_address_id;
+    public ?string $dpd_bank_id;
+    public int|string $dpd_shipping = 0;
     public $dpd_notification = 'no';
+    public $dpd_labels_format = 'A4';
+    public $dpd_language = 'sk';
+    public $dpd_print_format = 'pdf';
 
     public function __construct()
     {
@@ -82,6 +87,9 @@ class DpdExport
         $this->dpd_bank_id = isset($default_settings[DpdExportSettings::BANK_ID_OPTION_KEY]) ? $default_settings[DpdExportSettings::BANK_ID_OPTION_KEY] : null;
         $this->dpd_shipping = isset($default_settings[DpdExportSettings::SHIPPING_OPTION_KEY]) ? $default_settings[DpdExportSettings::SHIPPING_OPTION_KEY] : 0;
         $this->dpd_notification = isset($default_settings[DpdExportSettings::NOTIFICATION_OPTION_KEY]) ? $default_settings[DpdExportSettings::NOTIFICATION_OPTION_KEY] : 'no';
+        $this->dpd_labels_format = isset($default_settings[DpdExportSettings::LABELS_FORMAT_OPTION_KEY]) ? $default_settings[DpdExportSettings::LABELS_FORMAT_OPTION_KEY] : 'A4';
+        $this->dpd_language = isset($default_settings[DpdExportSettings::LANGUAGE_OPTION_KEY]) ? $default_settings[DpdExportSettings::LANGUAGE_OPTION_KEY] : 'sk';
+        $this->dpd_print_format = isset($default_settings[DpdExportSettings::PRINT_FORMAT_OPTION_KEY]) ? $default_settings[DpdExportSettings::PRINT_FORMAT_OPTION_KEY] : 'pdf';
     }
 
     /**
@@ -91,115 +99,84 @@ class DpdExport
      */
     public function getRequestData()
     {
-        $notification_data = [
-            'notification' => [
-                0 => [
-                    'destination' => !$this->{self::CUSTOMER_EMAIL_KEY} ? $this->{self::CUSTOMER_PHONE_KEY} : $this->{self::CUSTOMER_EMAIL_KEY},
-                    'type'        => '1',
-                    'rule'        => '1',
-                ]
-            ]
-        ];
+        return $this->getShipperRequestData();
+    }
 
-        $add_notification_data = $this->{DpdExportSettings::NOTIFICATION_OPTION_KEY} == 'yes' ? true : false;
+    private function getShipperRequestData(): array
+    {
+        $apiKey = sanitize_text_field((string) $this->dpd_api_key);
+        $email = sanitize_email((string) $this->dpd_api_email);
+        $delisId = sanitize_text_field((string) $this->dpd_delis_id);
+        $senderAddressId = $this->normalizeIntegerValue($this->{DpdExportSettings::ADDRESS_ID_OPTION_KEY});
+        $product = $this->resolveShipperProductCode();
+        $countryNumeric = $this->resolveCountryNumericCode((string) $this->{self::CUSTOMER_COUNTRY_KEY});
+        $shipmentType = sanitize_text_field((string) $this->{self::SHIPMENT_TYPE_KEY});
 
-        // Check if notification is required for the shipment type
-        if (DpdExportSettings::isNotificationRequired($this->{DpdExportSettings::SHIPPING_OPTION_KEY})) {
-            $add_notification_data = true;
+        if (!$apiKey || !$email || !$delisId) {
+            throw new Exception(__('DPD SK shipper API is not fully configured. Please set DELIS ID, login email and API key in DPD Export settings.', 'ar-design-dpd'));
         }
 
-        $services = [
-            'notifications' => $add_notification_data ? $notification_data : '',
-        ];
+        if (!$senderAddressId) {
+            throw new Exception(__('DPD shipper sender address ID is missing. Please select a pickup address for this export.', 'ar-design-dpd'));
+        }
 
-        $cod_data = [
-            'bankAccount' => [
-                'id' =>  $this->{DpdExportSettings::BANK_ID_OPTION_KEY},
+        if (!$product) {
+            throw new Exception(__('DPD product code is missing. Please configure the default DPD shipping product.', 'ar-design-dpd'));
+        }
+
+        if (!$countryNumeric) {
+            throw new Exception(sprintf(__('Country %s could not be converted to the numeric ISO code required by DPD shipper API.', 'ar-design-dpd'), (string) $this->{self::CUSTOMER_COUNTRY_KEY}));
+        }
+
+        $shipment = array_filter([
+            'reference' => (string) $this->{self::ORDER_NOTE_KEY},
+            'delisId' => $delisId,
+            'reference1' => (string) $this->{self::ORDER_REFERENCE_1_KEY},
+            'reference2' => (string) $this->{self::ORDER_REFERENCE_2_KEY},
+            'note' => (string) $this->{self::ORDER_NOTE_KEY},
+            'product' => $product,
+            'pickup' => $this->getShipperPickupData(),
+            'addressSender' => [
+                'id' => (string) $senderAddressId,
             ],
-            'paymentMethod'  => $this->getAllowedPaymentMethods(),
-            'variableSymbol' => $this->{self::ORDER_NOTE_KEY},
-            'amount'         => round($this->{self::ORDER_PRICE_KEY}, 2),
-            'currency'       => $this->{self::ORDER_CURRENCY_KEY},
-        ];
+            'addressRecipient' => array_filter([
+                'type' => $shipmentType ?: 'b2c',
+                'name' => (string) $this->{self::CUSTOMER_FULL_NAME_KEY},
+                'nameDetail' => (string) $this->{self::CUSTOMER_COMPANY_KEY},
+                'street' => (string) $this->{self::CUSTOMER_STREET_KEY},
+                'houseNumber' => (string) $this->{self::CUSTOMER_HOUSE_NUMBER_KEY},
+                'zip' => (string) $this->{self::CUSTOMER_ZIP_KEY},
+                'country' => $countryNumeric,
+                'city' => (string) $this->{self::CUSTOMER_CITY_KEY},
+                'phone' => $this->normalizePhoneNumber((string) $this->{self::CUSTOMER_PHONE_KEY}),
+                'email' => sanitize_email((string) $this->{self::CUSTOMER_EMAIL_KEY}),
+                'reference' => (string) $this->{self::ORDER_REFERENCE_1_KEY},
+                'note' => (string) $this->{self::ORDER_NOTE_KEY},
+            ], static function ($value) {
+                return $value !== '' && $value !== null;
+            }),
+            'parcels' => [
+                'parcel' => [$this->getShipperParcelData()],
+            ],
+            'services' => $this->getShipperServicesData($product),
+        ], static function ($value) {
+            return $value !== '' && $value !== null && $value !== [];
+        });
 
-        $add_cod_data = $this->orderPaymentIsCod() ? true : false;
-
-        if ($add_cod_data) {
-            $services['cod'] = $cod_data;
-        }
-
-        $parcelshop_data = [
-            'parcelShopId' => $this->{self::ORDER_PARCELSHOP_PUS_ID},
-        ];
-
-        $add_parcelshop_data = $this->{self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY} ? true : false;
-
-        if ($add_parcelshop_data) {
-            $services['parcelShopDelivery'] = $parcelshop_data;
-        }
-
-        // Calculate parcel weight
-        $parcel_weight = 3.0; // Default weight
-        if (!empty($this->{self::ORDER_PACKAGE_WEIGHT_KEY})) {
-            $weight = floatval($this->{self::ORDER_PACKAGE_WEIGHT_KEY});
-            if ($weight > 0) {
-                $parcel_weight = $weight;
-            }
-        }
-
-        $data = [
+        return [
             'jsonrpc' => '2.0',
-            'method' => 'create',
+            'method' => $this->resolveShipperMethod($product),
             'params' => [
                 'DPDSecurity' => [
                     'SecurityToken' => [
-                        'ClientKey' => $this->{DpdExportSettings::API_KEY_OPTION_KEY},
-                        'Email' =>  $this->{DpdExportSettings::EMAIL_OPTION_KEY},
+                        'ClientKey' => $apiKey,
+                        'Email' => $email,
                     ],
                 ],
-                'shipment' => [
-                    0 => [
-                        'delisId' => $this->{DpdExportSettings::DELIS_ID_OPTION_KEY},
-                        'reference' => $this->{self::ORDER_ID_KEY},
-                        'note' => $this->{self::ORDER_NOTE_KEY},
-                        'product' => $this->{DpdExportSettings::SHIPPING_OPTION_KEY},
-                        'pickup' => [
-                            'date' => $this->{self::ORDER_PICKUP_DATE_KEY},
-                        ],
-                        'addressSender' => [
-                            'id' => $this->{DpdExportSettings::ADDRESS_ID_OPTION_KEY},
-                        ],
-                        'addressRecipient' => [
-                            'type' => $this->{self::SHIPMENT_TYPE_KEY},
-                            'name' => $this->{self::CUSTOMER_FULL_NAME_KEY},
-                            'nameDetail' => $this->{self::CUSTOMER_COMPANY_KEY},
-                            'street' => $this->{self::CUSTOMER_STREET_KEY},
-                            'houseNumber' => $this->{self::CUSTOMER_HOUSE_NUMBER_KEY},
-                            'zip' => $this->{self::CUSTOMER_ZIP_KEY},
-                            'country' => $this->{self::CUSTOMER_COUNTRY_KEY},
-                            'city' => $this->{self::CUSTOMER_CITY_KEY},
-                            'phone' => $this->{self::CUSTOMER_PHONE_KEY} ,
-                            'email' => $this->{self::CUSTOMER_EMAIL_KEY},
-                            'note' => $this->{self::ORDER_NOTE_KEY},
-                        ],
-                        'parcels' => [
-                            'parcel' => [
-                                0 => [
-                                    'weight' => $parcel_weight,
-                                    'reference1' => $this->{self::ORDER_REFERENCE_1_KEY},
-                                    'reference2' => $this->{self::ORDER_REFERENCE_2_KEY},
-                                    'reference4' => 'Woocommerce',
-                                ],
-                            ],
-                        ],
-                        'services' => $services,
-                    ],
-                ],
-                'id' => $this->{self::ORDER_ID_KEY},
-            ]
+                'shipment' => [$shipment],
+            ],
+            'id' => (string) ($this->{self::ORDER_ID_KEY} ?: 'null'),
         ];
-
-        return $data;
     }
 
     /**
@@ -209,14 +186,9 @@ class DpdExport
      */
     public function getAllowedPaymentMethods()
     {
-        // Check if country is different than Slovakia, then allow only cash for cod
-        if ($this->{self::CUSTOMER_COUNTRY_KEY} != 703 && $this->orderPaymentIsCod()) {
-            // Only cash for foreign countries
-            return 0;
-        }
-
-        // Cash and card
-        return 1;
+        return $this->{self::CUSTOMER_COUNTRY_KEY} !== 'SK' && $this->orderPaymentIsCod()
+            ? 'Cash'
+            : 'Cash';
     }
 
     /**
@@ -226,7 +198,7 @@ class DpdExport
      */
     public function orderPaymentIsCod()
     {
-        $cod_payment_ids = (array) apply_filters('wc_dpd_cod_id', ['cod']);
+        $cod_payment_ids = (array) ard_dpd_apply_filters('wc_dpd_cod_id', 'ard_dpd_cod_payment_ids', ['cod']);
 
         return in_array($this->{self::ORDER_PAYMENT_METHOD_KEY}, $cod_payment_ids);
     }
@@ -236,9 +208,9 @@ class DpdExport
      *
      * @param array $data
      *
-     * @return void
+        * @return self
      */
-    public function setAddressRecipient($data = [])
+    public function setAddressRecipient(array $data = []): self
     {
         $this->{self::SHIPMENT_TYPE_KEY} = isset($data[self::SHIPMENT_TYPE_KEY]) && !empty($data[self::SHIPMENT_TYPE_KEY]) ? $data[self::SHIPMENT_TYPE_KEY] : 'b2c';
         $this->{self::CUSTOMER_FULL_NAME_KEY} = isset($data[self::CUSTOMER_FULL_NAME_KEY]) && !empty($data[self::CUSTOMER_FULL_NAME_KEY]) ? $data[self::CUSTOMER_FULL_NAME_KEY] : '';
@@ -261,54 +233,237 @@ class DpdExport
         $this->{self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY} = isset($data[self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY]) && !empty($data[self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY]) ? $data[self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY] : '';
         $this->{self::ORDER_PARCELSHOP_ID} = isset($data[self::ORDER_PARCELSHOP_ID]) && !empty($data[self::ORDER_PARCELSHOP_ID]) ? $data[self::ORDER_PARCELSHOP_ID] : '';
         $this->{self::ORDER_PARCELSHOP_PUS_ID} = isset($data[self::ORDER_PARCELSHOP_PUS_ID]) && !empty($data[self::ORDER_PARCELSHOP_PUS_ID]) ? $data[self::ORDER_PARCELSHOP_PUS_ID] : '';
+        $this->{self::ORDER_PARCELSHOP_COD_ALLOWED_KEY} = isset($data[self::ORDER_PARCELSHOP_COD_ALLOWED_KEY]) ? $data[self::ORDER_PARCELSHOP_COD_ALLOWED_KEY] : '';
         $this->{self::ORDER_PICKUP_DATE_KEY} = isset($data[self::ORDER_PICKUP_DATE_KEY]) && !empty($data[self::ORDER_PICKUP_DATE_KEY]) ? $data[self::ORDER_PICKUP_DATE_KEY] : '';
 
-        $this->{DpdExportSettings::SHIPPING_OPTION_KEY} = !empty($data[DpdExportSettings::SHIPPING_OPTION_KEY]) ? $data[DpdExportSettings::SHIPPING_OPTION_KEY] : $this->{DpdExportSettings::SHIPPING_OPTION_KEY};
         $this->{DpdExportSettings::NOTIFICATION_OPTION_KEY} = !empty($data[DpdExportSettings::NOTIFICATION_OPTION_KEY]) ? $data[DpdExportSettings::NOTIFICATION_OPTION_KEY] : $this->{DpdExportSettings::NOTIFICATION_OPTION_KEY};
         $this->{DpdExportSettings::ADDRESS_ID_OPTION_KEY} = !empty($data[DpdExportSettings::ADDRESS_ID_OPTION_KEY]) ? $data[DpdExportSettings::ADDRESS_ID_OPTION_KEY] : $this->{DpdExportSettings::ADDRESS_ID_OPTION_KEY};
         $this->{DpdExportSettings::BANK_ID_OPTION_KEY} = !empty($data[DpdExportSettings::BANK_ID_OPTION_KEY]) ? $data[DpdExportSettings::BANK_ID_OPTION_KEY] : $this->{DpdExportSettings::BANK_ID_OPTION_KEY};
+        $this->{DpdExportSettings::PRINT_FORMAT_OPTION_KEY} = !empty($this->dpd_print_format) ? $this->dpd_print_format : 'pdf';
 
-        // Add country ISO code
         $country = isset($data[self::CUSTOMER_COUNTRY_KEY]) && !empty($data[self::CUSTOMER_COUNTRY_KEY]) ? $data[self::CUSTOMER_COUNTRY_KEY] : '';
-
-        // Fix for Czech Republic - WooCommerce uses 'cs' but ISO3166 needs 'CZ'
         if (strtolower($country) === 'cs') {
             $country = 'CZ';
         }
 
-        try {
-            // Convert to uppercase for ISO3166 compatibility
-            $country_data = (new ISO3166())->alpha2(strtoupper($country));
-            $this->{self::CUSTOMER_COUNTRY_KEY} = !empty($country_data['numeric']) ? (int) $country_data['numeric'] : '';
-        } catch (Exception $e) {
-            // Log error and keep original value if country code is invalid
-            error_log('DPD Export: ' . $e->getMessage());
-            $this->{self::CUSTOMER_COUNTRY_KEY} = $country;
+        $this->{self::CUSTOMER_COUNTRY_KEY} = strtoupper((string) $country);
+
+        return $this;
+    }
+
+    private function getShipperPickupData(): array
+    {
+        return array_filter([
+            'date' => (string) $this->{self::ORDER_PICKUP_DATE_KEY},
+        ], static function ($value) {
+            return $value !== '' && $value !== null;
+        });
+    }
+
+    private function getShipperParcelData(): array
+    {
+        $parcel = [
+            'reference1' => (string) $this->{self::ORDER_REFERENCE_1_KEY},
+            'reference2' => (string) $this->{self::ORDER_REFERENCE_2_KEY},
+            'weight' => $this->normalizeParcelWeight(),
+        ];
+
+        return array_filter($parcel, static function ($value) {
+            return $value !== '' && $value !== null;
+        });
+    }
+
+    private function getShipperServicesData(int $product): array
+    {
+        $services = [];
+
+        if ($this->orderPaymentIsCod()) {
+            if (!empty($this->{self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY}) && !$this->parcelshopSupportsCod()) {
+                throw new Exception(__('Selected DPD Pickup / Pickup Station does not support dobírka (COD). Change the payment method or choose another pickup point.', 'ar-design-dpd'));
+            }
+
+            $codAmount = round((float) $this->{self::ORDER_PRICE_KEY}, 2);
+            $bankId = $this->normalizeIntegerValue($this->{DpdExportSettings::BANK_ID_OPTION_KEY});
+
+            if ($codAmount > 0) {
+                $services['cod'] = array_filter([
+                    'amount' => number_format($codAmount, 2, '.', ''),
+                    'currency' => (string) ($this->{self::ORDER_CURRENCY_KEY} ?: 'EUR'),
+                    'bankAccount' => $bankId ? ['id' => $bankId] : [],
+                    'variableSymbol' => preg_replace('/\D+/', '', (string) ($this->{self::ORDER_ID_KEY} ?: $this->{self::ORDER_NOTE_KEY})),
+                    'paymentMethod' => (int) apply_filters('ard_dpd_shipper_cod_payment_method', 0, $this),
+                ], static function ($value) {
+                    return $value !== '' && $value !== null && $value !== [];
+                });
+            }
         }
+
+        $notifications = $this->getShipperNotificationsData($product);
+        if ($notifications !== []) {
+            $services['notifications'] = [
+                'notification' => $notifications,
+            ];
+        }
+
+        if (!empty($this->{self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY})) {
+            $parcelShopId = $this->{self::ORDER_PARCELSHOP_PUS_ID} ?: $this->{self::ORDER_PARCELSHOP_ID};
+            if ($parcelShopId) {
+                $services['parcelShopDelivery'] = [
+                    'parcelShopId' => (int) $parcelShopId,
+                ];
+            }
+        }
+
+        return $services;
+    }
+
+    private function getShipperNotificationsData(int $product): array
+    {
+        $shouldForceNotifications = in_array($product, [9, 17], true);
+        $notificationEnabled = $this->{DpdExportSettings::NOTIFICATION_OPTION_KEY} === 'yes';
+
+        if (!$notificationEnabled && !$shouldForceNotifications) {
+            return [];
+        }
+
+        $rule = $product === 17 ? 902 : 904;
+        $language = strtoupper((string) ($this->dpd_language ?: 'SK'));
+        $notifications = [];
+
+        $email = sanitize_email((string) $this->{self::CUSTOMER_EMAIL_KEY});
+        if ($email) {
+            $notifications[] = [
+                'destination' => $email,
+                'type' => 1,
+                'rule' => $rule,
+                'language' => $language,
+            ];
+        }
+
+        $phone = $this->normalizePhoneNumber((string) $this->{self::CUSTOMER_PHONE_KEY});
+        if ($phone) {
+            $notifications[] = [
+                'destination' => $phone,
+                'type' => 3,
+                'rule' => $rule,
+                'language' => $language,
+            ];
+        }
+
+        if ($notifications === [] && $shouldForceNotifications) {
+            throw new Exception(__('DPD Home / ParcelShop export requires a customer email or phone number for notifications.', 'ar-design-dpd'));
+        }
+
+        return $notifications;
+    }
+
+    private function resolveShipperMethod(int $product): string
+    {
+        return (string) apply_filters('ard_dpd_shipper_create_method', 'createV3', $product, $this);
+    }
+
+    private function resolveShipperProductCode(): int
+    {
+        if (!empty($this->{self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY})) {
+            return 17;
+        }
+
+        $shipping_method_product = Shipping::getDpdProductCodeForMethod((string) $this->{self::ORDER_SHIPPING_METHOD_KEY});
+        if ($shipping_method_product > 0) {
+            return $shipping_method_product;
+        }
+
+        return $this->normalizeIntegerValue($this->dpd_shipping);
+    }
+
+    private function resolveCountryNumericCode(string $countryCode): int
+    {
+        $countryCode = strtoupper(trim($countryCode));
+        if ($countryCode === 'CS') {
+            $countryCode = 'CZ';
+        }
+
+        if ($countryCode === '') {
+            return 0;
+        }
+
+        try {
+            $country = (new ISO3166())->alpha2($countryCode);
+
+            return isset($country['numeric']) ? (int) $country['numeric'] : 0;
+        } catch (\Throwable $exception) {
+            return 0;
+        }
+    }
+
+    private function normalizePhoneNumber(string $phone): string
+    {
+        $phone = trim($phone);
+        if ($phone === '') {
+            return '';
+        }
+
+        $normalized = preg_replace('/(?!^)\+|[^\d+]+/', '', $phone);
+
+        return sanitize_text_field((string) $normalized);
+    }
+
+    private function normalizeParcelWeight(): string
+    {
+        $weight = 3.0;
+
+        if (!empty($this->{self::ORDER_PACKAGE_WEIGHT_KEY})) {
+            $customWeight = (float) $this->{self::ORDER_PACKAGE_WEIGHT_KEY};
+            if ($customWeight > 0) {
+                $weight = $customWeight;
+            }
+        }
+
+        return number_format($weight, 2, '.', '');
+    }
+
+    private function normalizeIntegerValue(mixed $value): int
+    {
+        if ($value === '' || $value === null) {
+            return 0;
+        }
+
+        return (int) $value;
+    }
+
+    private function parcelshopSupportsCod(): bool
+    {
+        $value = $this->{self::ORDER_PARCELSHOP_COD_ALLOWED_KEY};
+
+        if ($value === '' || $value === null) {
+            return true;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOL);
     }
 
     /**
      * Submit request to DPD
      *
      * @param array $data
-     * @param \WC_Order $data
+      * @param \WC_Order|null $order
      *
      * @return array
      *
      * @throws Exception
      */
-    public function export($data = [], $order = null)
+    public function export(array $data = [], $order = null): array
     {
         $data = $this->setAddressRecipient($data);
         $data = $this->getRequestData();
 
-        $data = apply_filters('wc_dpd_export_data', $data, $order);
+        $data = ard_dpd_apply_filters('wc_dpd_export_data', 'ard_dpd_export_data', $data, $order);
 
         if (empty($data)) {
             throw new Exception('No data', 400);
         }
 
-        if (!apply_filters('wc_dpd_allow_export', true, $data)) {
+        if (!ard_dpd_apply_filters('wc_dpd_allow_export', 'ard_dpd_allow_export', true, $data)) {
             throw new Exception('The export of the order was disabled', 400);
         }
 
@@ -325,13 +480,13 @@ class DpdExport
      * Call export statically
      *
      * @param array $data
-     * @param \WC_Order $order
+      * @param \WC_Order|null $order
      *
      * @return array
      *
      * @throws Exception
      */
-    public static function doExport($data = [], $order = null)
+    public static function doExport(array $data = [], $order = null): array
     {
         $export = new self();
         return $export->export($data, $order);

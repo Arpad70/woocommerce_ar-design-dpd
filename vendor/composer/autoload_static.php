@@ -4,16 +4,16 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf
+class ComposerStaticInitArDesignDpd811ec9a6667e574b1e439faa1bf
 {
     public static $files = array (
         '5374218f54ebd3508ef0ee93d0ad6d14' => __DIR__ . '/../..' . '/includes/helpers.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'W' => 
+        'A' => 
         array (
-            'WcDPD\\' => 6,
+            'ArDesign\\DPD\\' => 13,
         ),
         'L' => 
         array (
@@ -22,7 +22,7 @@ class ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf
     );
 
     public static $prefixDirsPsr4 = array (
-        'WcDPD\\' => 
+        'ArDesign\\DPD\\' => 
         array (
             0 => __DIR__ . '/../..' . '/includes',
         ),
@@ -42,29 +42,29 @@ class ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf
         'League\\ISO3166\\ISO3166DataProvider' => __DIR__ . '/..' . '/league/iso3166/src/ISO3166DataProvider.php',
         'League\\ISO3166\\ISO3166DataValidator' => __DIR__ . '/..' . '/league/iso3166/src/ISO3166DataValidator.php',
         'League\\ISO3166\\ISO3166WithAliases' => __DIR__ . '/..' . '/league/iso3166/src/ISO3166WithAliases.php',
-        'WcDPD\\Ajax' => __DIR__ . '/../..' . '/includes/Ajax.php',
-        'WcDPD\\Assets' => __DIR__ . '/../..' . '/includes/Assets.php',
-        'WcDPD\\Blocks' => __DIR__ . '/../..' . '/includes/Blocks.php',
-        'WcDPD\\Client' => __DIR__ . '/../..' . '/includes/Client.php',
-        'WcDPD\\Core' => __DIR__ . '/../..' . '/includes/Core.php',
-        'WcDPD\\DpdExport' => __DIR__ . '/../..' . '/includes/DpdExport.php',
-        'WcDPD\\DpdExportSettings' => __DIR__ . '/../..' . '/includes/DpdExportSettings.php',
-        'WcDPD\\DpdParcelShopShippingMethod' => __DIR__ . '/../..' . '/includes/DpdParcelShopShippingMethod.php',
-        'WcDPD\\Email' => __DIR__ . '/../..' . '/includes/Email.php',
-        'WcDPD\\Hooks' => __DIR__ . '/../..' . '/includes/Hooks.php',
-        'WcDPD\\Notice' => __DIR__ . '/../..' . '/includes/Notice.php',
-        'WcDPD\\Order' => __DIR__ . '/../..' . '/includes/Order.php',
-        'WcDPD\\OrderList' => __DIR__ . '/../..' . '/includes/OrderList.php',
-        'WcDPD\\OrderMetabox' => __DIR__ . '/../..' . '/includes/OrderMetabox.php',
-        'WcDPD\\Shipping' => __DIR__ . '/../..' . '/includes/Shipping.php',
+        'ArDesign\\DPD\\Ajax' => __DIR__ . '/../..' . '/includes/Ajax.php',
+        'ArDesign\\DPD\\Assets' => __DIR__ . '/../..' . '/includes/Assets.php',
+        'ArDesign\\DPD\\Blocks' => __DIR__ . '/../..' . '/includes/Blocks.php',
+        'ArDesign\\DPD\\Client' => __DIR__ . '/../..' . '/includes/Client.php',
+        'ArDesign\\DPD\\Core' => __DIR__ . '/../..' . '/includes/Core.php',
+        'ArDesign\\DPD\\DpdExport' => __DIR__ . '/../..' . '/includes/DpdExport.php',
+        'ArDesign\\DPD\\DpdExportSettings' => __DIR__ . '/../..' . '/includes/DpdExportSettings.php',
+        'ArDesign\\DPD\\DpdParcelShopShippingMethod' => __DIR__ . '/../..' . '/includes/DpdParcelShopShippingMethod.php',
+        'ArDesign\\DPD\\Email' => __DIR__ . '/../..' . '/includes/Email.php',
+        'ArDesign\\DPD\\Hooks' => __DIR__ . '/../..' . '/includes/Hooks.php',
+        'ArDesign\\DPD\\Notice' => __DIR__ . '/../..' . '/includes/Notice.php',
+        'ArDesign\\DPD\\Order' => __DIR__ . '/../..' . '/includes/Order.php',
+        'ArDesign\\DPD\\OrderList' => __DIR__ . '/../..' . '/includes/OrderList.php',
+        'ArDesign\\DPD\\OrderMetabox' => __DIR__ . '/../..' . '/includes/OrderMetabox.php',
+        'ArDesign\\DPD\\Shipping' => __DIR__ . '/../..' . '/includes/Shipping.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit50bfb811ec9a6667e574b1e439faa1bf::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitArDesignDpd811ec9a6667e574b1e439faa1bf::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitArDesignDpd811ec9a6667e574b1e439faa1bf::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitArDesignDpd811ec9a6667e574b1e439faa1bf::$classMap;
 
         }, null, ClassLoader::class);
     }

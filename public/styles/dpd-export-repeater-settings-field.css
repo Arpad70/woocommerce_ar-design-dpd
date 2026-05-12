@@ -5,7 +5,8 @@
 .repeatable-field__rows, .repeatable-field__bottom {
   max-width: 400px;
 }
-.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__rows, .repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__bottom {
+.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__rows, .repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__bottom,
+.repeatable-field--ard_dpd_products_weight_shipping_rates .repeatable-field__rows, .repeatable-field--ard_dpd_products_weight_shipping_rates .repeatable-field__bottom {
   max-width: 480px;
 }
 .repeatable-field__rows {
@@ -28,7 +29,8 @@
   margin-right: 5px !important;
   width: 50% !important;
 }
-.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__input {
+.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__input,
+.repeatable-field--ard_dpd_products_weight_shipping_rates .repeatable-field__input {
   width: 95% !important;
   min-width: 100px !important;
 }
@@ -48,7 +50,8 @@
   color: #b91c1c;
   background: none;
 }
-.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__remove-button {
+.repeatable-field--wc_dpd_products_weight_shipping_rates .repeatable-field__remove-button,
+.repeatable-field--ard_dpd_products_weight_shipping_rates .repeatable-field__remove-button {
   margin-top: 31px !important;
 }
 .repeatable-field__remove-button:hover, .repeatable-field__remove-button:focus {

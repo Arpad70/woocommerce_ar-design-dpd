@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 class Shipping
 {
     public const SESSION_CHOSEN_PARCELSHOP_KEY = 'wc_dpd_chosen_parcelshop';
-    public const FRAGMENTS_ELEMENT_ID = 'wc_dpd_fragments';
+    public const FRAGMENTS_ELEMENT_ID = 'ard_dpd_fragments';
 
     public static function init()
     {
@@ -28,6 +28,7 @@ class Shipping
         add_filter('woocommerce_add_to_cart_fragments', [__CLASS__, 'maybeClearChosenParcelshopDataFragments'], 10, 1);
         add_action('wp_enqueue_scripts', [__CLASS__, 'maybeEnqueueCartFragments'], 10, 1);
         add_action('wc_dpd_parcelshops_search', [__CLASS__, 'maybeHideParcelshopsBasedOnWeightAndVolume'], 10, 1);
+        add_action('ard_dpd_parcelshops_search', [__CLASS__, 'maybeHideParcelshopsBasedOnWeightAndVolume'], 10, 1);
     }
 
     /**
@@ -35,12 +36,47 @@ class Shipping
      *
      * @return array
      */
-    public static function registerShippingMethodsAndSettings($methods)
+    public static function registerShippingMethodsAndSettings(array $methods): array
     {
-        $methods[DpdExportSettings::SETTINGS_ID_KEY] = new DpdExportSettings();
         $methods[DpdParcelShopShippingMethod::SETTINGS_ID_KEY] = new DpdParcelShopShippingMethod();
+        $methods[DpdClassicShippingMethod::getMethodId()] = new DpdClassicShippingMethod();
+        $methods[DpdHomeShippingMethod::getMethodId()] = new DpdHomeShippingMethod();
+        $methods[DpdExpress1000ShippingMethod::getMethodId()] = new DpdExpress1000ShippingMethod();
+        $methods[DpdExpress1200ShippingMethod::getMethodId()] = new DpdExpress1200ShippingMethod();
+        $methods[DpdGuaranteeShippingMethod::getMethodId()] = new DpdGuaranteeShippingMethod();
 
         return $methods;
+    }
+
+    public static function getDpdProductCodeForMethod(string $shipping_method_id): int
+    {
+        $shipping_method_id = trim($shipping_method_id);
+        $product_code_by_method_id = self::getDpdProductCodeMap();
+
+        if ($shipping_method_id === '') {
+            return 0;
+        }
+
+        if (isset($product_code_by_method_id[$shipping_method_id])) {
+            return (int) $product_code_by_method_id[$shipping_method_id];
+        }
+
+        $canonical_method_id = wc_get_string_before_colon($shipping_method_id);
+
+        return isset($product_code_by_method_id[$canonical_method_id])
+            ? (int) $product_code_by_method_id[$canonical_method_id]
+            : 0;
+    }
+
+    private static function getDpdProductCodeMap(): array
+    {
+        return [
+            DpdClassicShippingMethod::getMethodId() => DpdClassicShippingMethod::getProductCode(),
+            DpdHomeShippingMethod::getMethodId() => DpdHomeShippingMethod::getProductCode(),
+            DpdExpress1000ShippingMethod::getMethodId() => DpdExpress1000ShippingMethod::getProductCode(),
+            DpdExpress1200ShippingMethod::getMethodId() => DpdExpress1200ShippingMethod::getProductCode(),
+            DpdGuaranteeShippingMethod::getMethodId() => DpdGuaranteeShippingMethod::getProductCode(),
+        ];
     }
 
     /**
@@ -73,7 +109,7 @@ class Shipping
             !$parcelshop_city ||
             !$parcelshop_country_code
         ) {
-            wc_add_notice(__("You have to choose a parcelshop.", "wc-dpd"), 'error');
+            wc_add_notice(__("You have to choose a parcelshop.", "ar-design-dpd"), 'error');
         }
     }
 
@@ -100,7 +136,7 @@ class Shipping
         // Get template data using shared method
         $template_data = self::prepareParcelshopTemplateData();
 
-        echo include_template('parcelshop-shipping-method-content.php', $template_data);
+        echo ard_dpd_include_template('parcelshop-shipping-method-content.php', $template_data);
 
         return $method;
     }
@@ -126,13 +162,19 @@ class Shipping
             $language = isset($settings[DpdExportSettings::LANGUAGE_OPTION_KEY]) ? (string) $settings[DpdExportSettings::LANGUAGE_OPTION_KEY] : 'sk';
 
             // Include map widget html
-            echo include_template('parcelshop-map-widget.php', [
+            echo ard_dpd_include_template('parcelshop-map-widget.php', [
                 'api_key' => $api_key,
                 'language' => $language,
             ]);
+
+            // Include legacy popup as fallback when map widget cannot be used.
+            echo ard_dpd_include_template('parcelshop-popup.php', [
+                'countries' => (array) WC()->countries->get_allowed_countries(),
+                'base_country_code' => (string) WC()->countries->get_base_country()
+            ]);
         } else {
             // Include popup html
-            echo include_template('parcelshop-popup.php', [
+            echo ard_dpd_include_template('parcelshop-popup.php', [
                 'countries' => (array) WC()->countries->get_allowed_countries(),
                 'base_country_code' => (string) WC()->countries->get_base_country()
             ]);
@@ -239,11 +281,11 @@ class Shipping
             $chosen_payment_method = WC()->session->get('chosen_payment_method');
 
             // Check if COD is required if chosen woocommerce shipping method is cod
-            $cod_payment_ids = (array) apply_filters('wc_dpd_cod_id', ['cod']);
+            $cod_payment_ids = (array) ard_dpd_apply_filters('wc_dpd_cod_id', 'ard_dpd_cod_payment_ids', ['cod']);
             $is_cod_required = in_array($chosen_payment_method, $cod_payment_ids);
 
             // Check if card payment is required
-            $card_payment_ids = (array) apply_filters('wc_dpd_card_payment_ids', []);
+            $card_payment_ids = (array) ard_dpd_apply_filters('wc_dpd_card_payment_ids', 'ard_dpd_card_payment_ids', []);
             $is_card_required = in_array($chosen_payment_method, $card_payment_ids);
 
             $parcelshop_cod_allowed = isset($chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY]) ? filter_var($chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY], FILTER_VALIDATE_BOOL) : true;
@@ -584,10 +626,10 @@ class Shipping
 
         $parcelshop_shipping_method_settings = DpdParcelShopShippingMethod::getSettings();
 
-        // Get allowed countries codes in lowercase
+        // Get allowed country codes in WooCommerce ISO format.
         $countries = (array) WC()->countries->get_allowed_countries();
         $allowed_countries = array_keys($countries);
-        $allowed_countries = array_map('strtolower', $allowed_countries);
+        $allowed_countries = array_map('strtoupper', $allowed_countries);
 
         // Check eligibility for Alzabox, Slovenska posta boxes, and Z-Box
         $is_eligible_for_alzabox = self::checkIfPackageIsEligibleForAnAlzabox();
@@ -621,11 +663,11 @@ class Shipping
         $chosen_payment_method = WC()->session->get('chosen_payment_method');
 
         // Check if COD is required if chosen woocommerce shipping method is cod
-        $cod_payment_ids = (array) apply_filters('wc_dpd_cod_id', ['cod']);
+        $cod_payment_ids = (array) ard_dpd_apply_filters('wc_dpd_cod_id', 'ard_dpd_cod_payment_ids', ['cod']);
         $is_cod_required = in_array($chosen_payment_method, $cod_payment_ids);
 
         // Check if card payment is required
-        $card_payment_ids = (array) apply_filters('wc_dpd_card_payment_ids', []);
+        $card_payment_ids = (array) ard_dpd_apply_filters('wc_dpd_card_payment_ids', 'ard_dpd_card_payment_ids', []);
         $is_card_required = in_array($chosen_payment_method, $card_payment_ids);
 
         // Get customer zip, try to get from shipping address, if not available, get from billing address
@@ -691,7 +733,7 @@ class Shipping
             'customer_zip' => (string) $customer_zip,
             'countries' => $countries,
             'allowed_countries' => (array) $allowed_countries,
-            'base_country_code' => (string) strtolower($base_country_code),
+            'base_country_code' => (string) strtoupper($base_country_code),
             'min_weight' => (float) $min_weight_kg,
             'is_eligible_for_alzabox' => $is_eligible_for_alzabox,
             'is_eligible_for_slovenska_posta_box' => $is_eligible_for_slovenska_posta_box,
@@ -715,9 +757,9 @@ class Shipping
         $chosen_payment_method = WC()->session ? WC()->session->get('chosen_payment_method') : '';
 
         if ($type === 'cod') {
-            $payment_ids = (array) apply_filters('wc_dpd_cod_id', ['cod']);
+            $payment_ids = (array) ard_dpd_apply_filters('wc_dpd_cod_id', 'ard_dpd_cod_payment_ids', ['cod']);
         } else {
-            $payment_ids = (array) apply_filters('wc_dpd_card_payment_ids', []);
+            $payment_ids = (array) ard_dpd_apply_filters('wc_dpd_card_payment_ids', 'ard_dpd_card_payment_ids', []);
         }
 
         return in_array($chosen_payment_method, $payment_ids);

@@ -1,6 +1,6 @@
 <?php
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 defined('ABSPATH') || exit;
 
@@ -61,8 +61,8 @@ class DpdParcelShopShippingMethod extends \WC_Shipping_Method
 
         $this->id = self::SETTINGS_ID_KEY;
         $this->instance_id = absint($instance_id);
-        $this->method_title = __('DPD parcelshop', 'wc-dpd');
-        $this->method_description = __('Allow customers to deliver to the DPD parcelshops.', 'wc-dpd');
+        $this->method_title = __('DPD parcelshop', 'ar-design-dpd');
+        $this->method_description = __('Allow customers to deliver to the DPD parcelshops.', 'ar-design-dpd');
         $this->supports = [
             'shipping-zones',
             'instance-settings',
@@ -84,7 +84,7 @@ class DpdParcelShopShippingMethod extends \WC_Shipping_Method
         $this->init_settings();
 
         // Define user set variables.
-        $this->title = __('DPD Pickup/Pickup Station', 'wc-dpd');
+        $this->title = __('DPD Pickup/Pickup Station', 'ar-design-dpd');
         $this->tax_status = $this->get_option('tax_status');
 
         $fee = (float) wp_kses_post($this->get_option('fee'));
@@ -121,7 +121,7 @@ class DpdParcelShopShippingMethod extends \WC_Shipping_Method
 
         // Check if shops are disabled AND (either global lockers are disabled OR all individual locker types are disabled)
         if ($disallow_shops && ($disallow_lockers || $all_individual_locker_types_disabled)) {
-            \WC_Admin_Settings::add_error(__('At least one pickup point type must remain enabled. You cannot disable shops and all locker types at the same time.', 'wc-dpd'));
+            \WC_Admin_Settings::add_error(__('At least one pickup point type must remain enabled. You cannot disable shops and all locker types at the same time.', 'ar-design-dpd'));
 
             // Prevent saving the invalid configuration
             if ($disallow_lockers) {
@@ -137,7 +137,7 @@ class DpdParcelShopShippingMethod extends \WC_Shipping_Method
 
         // Validate that we cannot have all individual locker types disabled AND the global locker disable checked (redundant configuration)
         if ($disallow_lockers && $all_individual_locker_types_disabled) {
-            \WC_Admin_Settings::add_error(__('You cannot disable all lockers globally and also disable all individual locker types at the same time. This configuration is redundant.', 'wc-dpd'));
+            \WC_Admin_Settings::add_error(__('You cannot disable all lockers globally and also disable all individual locker types at the same time. This configuration is redundant.', 'ar-design-dpd'));
 
             // Prevent saving by unsetting the global locker checkbox
             unset($_POST[self::DISALLOW_LOCKERS_OPTION_KEY]);
@@ -161,218 +161,218 @@ class DpdParcelShopShippingMethod extends \WC_Shipping_Method
 
         $this->instance_form_fields = [
             'tax_status' => array(
-                'title'   => __('Tax status', 'wc-dpd'),
+                'title'   => __('Tax status', 'ar-design-dpd'),
                 'type'    => 'select',
                 'class'   => 'wc-enhanced-select',
                 'default' => 'none',
                 'options' => array(
-                    'none'    => _x('None', 'Tax status', 'wc-dpd'),
-                    'taxable' => __('Taxable', 'wc-dpd'),
+                    'none'    => _x('None', 'Tax status', 'ar-design-dpd'),
+                    'taxable' => __('Taxable', 'ar-design-dpd'),
                 ),
             ),
             self::SHIPPING_PRICE_TYPE_OPTION_KEY => [
-                'title' => __('Shipping type', 'wc-dpd'),
+                'title' => __('Shipping type', 'ar-design-dpd'),
                 'type' => 'select',
                 'options' => [
-                    'fixed' => __('Fixed shipping price', 'wc-dpd'),
-                    'products_weight_based' => __('Products weight based shipping price', 'wc-dpd'),
+                    'fixed' => __('Fixed shipping price', 'ar-design-dpd'),
+                    'products_weight_based' => __('Products weight based shipping price', 'ar-design-dpd'),
                 ],
-                'description' => __('Choose type of the shipping.', 'wc-dpd'),
+                'description' => __('Choose type of the shipping.', 'ar-design-dpd'),
                 'desc_tip' => true,
                 'class' => 'js-dpd-shipping-type-select'
             ],
             'fee' => [
-                'title' => __('Delivery fee', 'wc-dpd'),
+                'title' => __('Delivery fee', 'ar-design-dpd'),
                 'type' => 'price',
-                'description' => __('What fee do you want to charge for shipping to the parcelshop.', 'wc-dpd'),
+                'description' => __('What fee do you want to charge for shipping to the parcelshop.', 'ar-design-dpd'),
                 'default' => '',
                 'desc_tip' => true,
                 'placeholder' => wc_format_localized_price(0),
                 'class' => 'js-dpd-fixed-shipping-type'
             ],
             self::FREE_FIXED_SHIPPING_OPTION_KEY => [
-                'title' => __('Free shipping from', 'wc-dpd'),
+                'title' => __('Free shipping from', 'ar-design-dpd'),
                 'type' => 'price',
-                'description' => __('Set minimum cart value for free shipping. Leave empty to disable free shipping entirely.', 'wc-dpd'),
+                'description' => __('Set minimum cart value for free shipping. Leave empty to disable free shipping entirely.', 'ar-design-dpd'),
                 'default' => '',
                 'desc_tip' => true,
                 'placeholder' => wc_format_localized_price(0),
                 'class' => 'js-dpd-fixed-shipping-type'
             ],
             self::PRODUCTS_WEIGHT_SHIPPING_RATES_OPTION_KEY => [
-                'title' => __('Products weight based shipping rates', 'wc-dpd'),
+                'title' => __('Products weight based shipping rates', 'ar-design-dpd'),
                 'type' => 'repeater',
-                'description' => __('Add shipping rates based on the weight of products in the cart.', 'wc-dpd'),
+                'description' => __('Add shipping rates based on the weight of products in the cart.', 'ar-design-dpd'),
                 'desc_tip' => true,
-                'label_text' => __('Shipping rate', 'wc-dpd'),
-                'min_weight_input_text' => sprintf(__('Min weight (%s)', 'wc-dpd'), $weight_unit),
-                'max_weight_input_text' => sprintf(__('Max weight (%s)', 'wc-dpd'), $weight_unit),
-                'price_input_text' => __('Price', 'wc-dpd') . ' ' . (wc_prices_include_tax() ? __('with', 'wc-dpd') : __('without', 'wc-dpd')) . ' ' . __('tax', 'wc-dpd'),
-                'min_weight_input_placeholder_text' => __('Min weight', 'wc-dpd'),
-                'max_weight_input_placeholder_text' => __('Max weight', 'wc-dpd'),
-                'price_input_placeholder_text' => __('Price', 'wc-dpd'),
-                'add_btn_text' => __('Add a shipping rate', 'wc-dpd'),
+                'label_text' => __('Shipping rate', 'ar-design-dpd'),
+                'min_weight_input_text' => sprintf(__('Min weight (%s)', 'ar-design-dpd'), $weight_unit),
+                'max_weight_input_text' => sprintf(__('Max weight (%s)', 'ar-design-dpd'), $weight_unit),
+                'price_input_text' => __('Price', 'ar-design-dpd') . ' ' . (wc_prices_include_tax() ? __('with', 'ar-design-dpd') : __('without', 'ar-design-dpd')) . ' ' . __('tax', 'ar-design-dpd'),
+                'min_weight_input_placeholder_text' => __('Min weight', 'ar-design-dpd'),
+                'max_weight_input_placeholder_text' => __('Max weight', 'ar-design-dpd'),
+                'price_input_placeholder_text' => __('Price', 'ar-design-dpd'),
+                'add_btn_text' => __('Add a shipping rate', 'ar-design-dpd'),
                 'class' => 'js-dpd-weight-based-shipping-type'
             ],
             self::FREE_WEIGHT_BASED_SHIPPING_OPTION_KEY => [
-                'title' => __('Free shipping from', 'wc-dpd'),
+                'title' => __('Free shipping from', 'ar-design-dpd'),
                 'type' => 'price',
-                'description' => __('Set minimum cart value for free shipping. Leave empty to disable free shipping entirely.', 'wc-dpd'),
+                'description' => __('Set minimum cart value for free shipping. Leave empty to disable free shipping entirely.', 'ar-design-dpd'),
                 'default' => '',
                 'desc_tip' => true,
                 'placeholder' => wc_format_localized_price(0),
                 'class' => 'js-dpd-weight-based-shipping-type'
             ],
             self::PACKAGE_WEIGHT_SHIPPING_LIMITS_OPTION_KEY => [
-                'title' => __('Setting the weight limits for packages', 'wc-dpd'),
-                'description' => __('If the shipment does not meet the conditions for delivery in a parcelbox, this shipping method will not be displayed.', 'wc-dpd'),
+                'title' => __('Setting the weight limits for packages', 'ar-design-dpd'),
+                'description' => __('If the shipment does not meet the conditions for delivery in a parcelbox, this shipping method will not be displayed.', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
                 'class' => 'js-dpd-checkbox-weight-limit',
             ],
             self::PACKAGE_WEIGHT_SHIPPING_LIMITS_MAX_WEIGHT_OPTION_KEY => [
-                'title' => __('Maximum weight', 'wc-dpd'),
+                'title' => __('Maximum weight', 'ar-design-dpd'),
                 'type' => 'number',
                 'default' => '',
                 'desc_tip' => true,
                 'class' => 'js-dpd-weight-limit-shipping-type',
             ],
             self::PACKAGE_WEIGHT_SHIPPING_LIMITS_MAX_WEIGHT_ALZABOX_OPTION_KEY => [
-                'title' => __('Maximum weight for Alzabox', 'wc-dpd'),
+                'title' => __('Maximum weight for Alzabox', 'ar-design-dpd'),
                 'type' => 'number',
                 'default' => '',
                 'desc_tip' => true,
                 'class' => 'js-dpd-weight-limit-shipping-type',
             ],
             self::PACKAGE_WEIGHT_SHIPPING_LIMITS_MAX_WEIGHT_SLOVENSKA_POSTA_OPTION_KEY => [
-                'title' => __('Maximum weight for Slovenska Posta box', 'wc-dpd'),
+                'title' => __('Maximum weight for Slovenska Posta box', 'ar-design-dpd'),
                 'type' => 'number',
                 'default' => '',
                 'desc_tip' => true,
                 'class' => 'js-dpd-weight-limit-shipping-type',
             ],
             self::PACKAGE_WEIGHT_SHIPPING_LIMITS_MAX_WEIGHT_ZBOX_OPTION_KEY => [
-                'title' => __('Maximum weight for Z-Box (Packeta)', 'wc-dpd'),
+                'title' => __('Maximum weight for Z-Box', 'ar-design-dpd'),
                 'type' => 'number',
                 'default' => '',
                 'desc_tip' => true,
                 'class' => 'js-dpd-weight-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_OPTION_KEY => [
-                'title' => __('Setting the dimension limits for packages', 'wc-dpd'),
-                'description' => __('If the shipment does not meet the conditions for delivery in a box, this shipping method will not be displayed.', 'wc-dpd'),
+                'title' => __('Setting the dimension limits for packages', 'ar-design-dpd'),
+                'description' => __('If the shipment does not meet the conditions for delivery in a box, this shipping method will not be displayed.', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
                 'class' => 'js-dpd-checkbox-dimension-limit',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_WIDTH_OPTION_KEY => [
-                'title' => __('Maximum width', 'wc-dpd'),
+                'title' => __('Maximum width', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_HEIGHT_OPTION_KEY => [
-                'title' => __('Maximum height', 'wc-dpd'),
+                'title' => __('Maximum height', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_LENGTH_OPTION_KEY => [
-                'title' => __('Maximum length', 'wc-dpd'),
+                'title' => __('Maximum length', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_WIDTH_ALZABOX_OPTION_KEY => [
-                'title' => __('Maximum width for Alzabox', 'wc-dpd'),
+                'title' => __('Maximum width for Alzabox', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_HEIGHT_ALZABOX_OPTION_KEY => [
-                'title' => __('Maximum height for Alzabox', 'wc-dpd'),
+                'title' => __('Maximum height for Alzabox', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_LENGTH_ALZABOX_OPTION_KEY => [
-                'title' => __('Maximum length for Alzabox', 'wc-dpd'),
+                'title' => __('Maximum length for Alzabox', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_WIDTH_SLOVENSKA_POSTA_OPTION_KEY => [
-                'title' => __('Maximum width for Slovenska Posta box', 'wc-dpd'),
+                'title' => __('Maximum width for Slovenska Posta box', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_HEIGHT_SLOVENSKA_POSTA_OPTION_KEY => [
-                'title' => __('Maximum height for Slovenska Posta box', 'wc-dpd'),
+                'title' => __('Maximum height for Slovenska Posta box', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_LENGTH_SLOVENSKA_POSTA_OPTION_KEY => [
-                'title' => __('Maximum length for Slovenska Posta box', 'wc-dpd'),
+                'title' => __('Maximum length for Slovenska Posta box', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_WIDTH_ZBOX_OPTION_KEY => [
-                'title' => __('Maximum width for Z-Box (Packeta)', 'wc-dpd'),
+                'title' => __('Maximum width for Z-Box', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_HEIGHT_ZBOX_OPTION_KEY => [
-                'title' => __('Maximum height for Z-Box (Packeta)', 'wc-dpd'),
+                'title' => __('Maximum height for Z-Box', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::PACKAGE_DIMENSION_SHIPPING_LIMITS_MAX_LENGTH_ZBOX_OPTION_KEY => [
-                'title' => __('Maximum length for Z-Box (Packeta)', 'wc-dpd'),
+                'title' => __('Maximum length for Z-Box', 'ar-design-dpd'),
                 'type' => 'number',
                 'class' => 'js-dpd-dimension-limit-shipping-type',
             ],
             self::DISALLOW_SHOPS_OPTION_KEY => [
-                'title' => __('Disallow Shops', 'wc-dpd'),
+                'title' => __('Disallow Shops', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
-                'description' => __('If checked, DPD Pickup shops will be disabled.', 'wc-dpd'),
+                'description' => __('If checked, DPD Pickup shops will be disabled.', 'ar-design-dpd'),
                 'class' => 'js-dpd-disallow-shops-checkbox',
             ],
             self::DISALLOW_LOCKERS_OPTION_KEY => [
-                'title' => __('Disallow Lockers', 'wc-dpd'),
+                'title' => __('Disallow Lockers', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
-                'description' => __('If checked, all locker types will be disabled.', 'wc-dpd'),
+                'description' => __('If checked, all locker types will be disabled.', 'ar-design-dpd'),
                 'class' => 'js-dpd-disallow-lockers-checkbox',
             ],
             self::DISALLOW_DPD_PICKUP_STATIONS_OPTION_KEY => [
-                'title' => __('Disallow DPD Pickup Stations', 'wc-dpd'),
+                'title' => __('Disallow DPD Pickup Stations', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
-                'description' => __('If checked, DPD Pickup Stations will be disabled.', 'wc-dpd'),
+                'description' => __('If checked, DPD Pickup Stations will be disabled.', 'ar-design-dpd'),
                 'class' => 'js-dpd-disallow-dpd-pickup-stations-checkbox',
             ],
             self::DISALLOW_SK_POST_OPTION_KEY => [
-                'title' => __('Disallow Slovenská Pošta Boxes', 'wc-dpd'),
+                'title' => __('Disallow Slovenská Pošta Boxes', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
-                'description' => __('If checked, Slovenská Pošta boxes will be disabled.', 'wc-dpd'),
+                'description' => __('If checked, Slovenská Pošta boxes will be disabled.', 'ar-design-dpd'),
                 'class' => 'js-dpd-disallow-sk-post-checkbox',
             ],
             self::DISALLOW_ALZA_BOXES_OPTION_KEY => [
-                'title' => __('Disallow Alza Boxes', 'wc-dpd'),
+                'title' => __('Disallow Alza Boxes', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
-                'description' => __('If checked, Alza Boxes will be disabled.', 'wc-dpd'),
+                'description' => __('If checked, Alza Boxes will be disabled.', 'ar-design-dpd'),
                 'class' => 'js-dpd-disallow-alza-boxes-checkbox',
             ],
             self::DISALLOW_ZBOX_OPTION_KEY => [
-                'title' => __('Disallow Z-Box (Packeta)', 'wc-dpd'),
+                'title' => __('Disallow Z-Box', 'ar-design-dpd'),
                 'type' => 'checkbox',
                 'default' => false,
                 'desc_tip' => true,
-                'description' => __('If checked, Z-Box (Packeta) will be disabled.', 'wc-dpd'),
+                'description' => __('If checked, Z-Box will be disabled.', 'ar-design-dpd'),
                 'class' => 'js-dpd-disallow-zbox-checkbox',
             ],
         ];
@@ -617,8 +617,8 @@ class DpdParcelShopShippingMethod extends \WC_Shipping_Method
             'priceInputPlaceholderText' => $data['price_input_placeholder_text'],
             'inputName' => $field_key,
             'labelText' => $data['label_text'],
-            'removeLabel' => __('Remove', 'wc-dpd'),
-            'title' => __('Title', 'wc-dpd'),
+            'removeLabel' => __('Remove', 'ar-design-dpd'),
+            'title' => __('Title', 'ar-design-dpd'),
         ];
         $props = htmlspecialchars(json_encode($props), ENT_QUOTES, 'UTF-8');
 
@@ -686,12 +686,12 @@ class DpdParcelShopShippingMethod extends \WC_Shipping_Method
         }
 
         // Repeater field assets (includes admin validation module)
-        wp_enqueue_script(self::SETTINGS_ID_KEY . '_repeater_field', WCDPD_PLUGIN_ASSETS_URL . 'scripts/dpd-parcelshop-shipping-method-weight-by-package-repeater.js', [], wc_dpd_get_plugin_version(), true);
-        wp_localize_script(self::SETTINGS_ID_KEY . '_repeater_field', 'wc_dpd_admin_validation_settings', [
-            'pickup_types_validation_error' => __('At least one pickup point type must remain enabled. You cannot disable shops and all locker types at the same time.', 'wc-dpd'),
-            'redundant_configuration_error' => __('You cannot disable all lockers globally and also disable all individual locker types at the same time. This configuration is redundant.', 'wc-dpd'),
+        wp_enqueue_script(self::SETTINGS_ID_KEY . '_repeater_field', AR_DESIGN_DPD_PLUGIN_ASSETS_URL . 'scripts/dpd-parcelshop-shipping-method-weight-by-package-repeater.js', [], ard_dpd_get_plugin_version(), true);
+        wp_localize_script(self::SETTINGS_ID_KEY . '_repeater_field', 'ard_dpd_admin_validation_settings', [
+            'pickup_types_validation_error' => __('At least one pickup point type must remain enabled. You cannot disable shops and all locker types at the same time.', 'ar-design-dpd'),
+            'redundant_configuration_error' => __('You cannot disable all lockers globally and also disable all individual locker types at the same time. This configuration is redundant.', 'ar-design-dpd'),
         ]);
-        wp_enqueue_style(self::SETTINGS_ID_KEY . '_repeater_field', WCDPD_PLUGIN_ASSETS_URL . 'styles/dpd-export-repeater-settings-field.css', [], wc_dpd_get_plugin_version(), 'all');
+        wp_enqueue_style(self::SETTINGS_ID_KEY . '_repeater_field', AR_DESIGN_DPD_PLUGIN_ASSETS_URL . 'styles/dpd-export-repeater-settings-field.css', [], ard_dpd_get_plugin_version(), 'all');
     }
 
     /**

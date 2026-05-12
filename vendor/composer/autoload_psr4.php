@@ -6,6 +6,6 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'WcDPD\\' => array($baseDir . '/includes'),
+    'ArDesign\\DPD\\' => array($baseDir . '/includes'),
     'League\\ISO3166\\' => array($vendorDir . '/league/iso3166/src'),
 );

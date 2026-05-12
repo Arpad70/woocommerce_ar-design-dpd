@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WcDPD;
+namespace ArDesign\DPD;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -89,8 +89,8 @@ final class ArDesignDpdUpdater
             'homepage' => $details,
             'download_link' => (string) ($release['package_url'] ?? ''),
             'sections' => array(
-                'description' => __('Samostatný DPD modul pre WooCommerce spravovaný AR Design.', 'wc-dpd'),
-                'changelog' => '' !== $body ? wp_kses_post(nl2br(esc_html($body))) : __('Changelog nie je dostupný.', 'wc-dpd'),
+                'description' => __('Samostatný DPD modul pre WooCommerce spravovaný AR Design.', 'ar-design-dpd'),
+                'changelog' => '' !== $body ? wp_kses_post(nl2br(esc_html($body))) : __('Changelog nie je dostupný.', 'ar-design-dpd'),
             ),
         );
     }
