@@ -1233,6 +1233,10 @@ class Tracking
         $summary = self::getCurrentTrackingSummary($order);
         $carrier = sanitize_key((string) ($shipment['carrier'] ?? ''));
 
+        if ($carrier !== '' && $carrier !== Shipment::CARRIER) {
+            return [];
+        }
+
         $trackingNumbers = isset($shipment['tracking_numbers']) && is_array($shipment['tracking_numbers'])
             ? array_values(array_filter(array_map('strval', $shipment['tracking_numbers'])))
             : [];
