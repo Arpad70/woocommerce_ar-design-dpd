@@ -41,7 +41,7 @@ class ShipmentCreatedEmail extends WC_Email
         return __('We have handed your shipment to the carrier', 'ar-design-dpd');
     }
 
-    public function trigger($order_id, $shipmentData = [], $order = null)
+    public function trigger(int $order_id, array $shipmentData = [], ?WC_Order $order = null): void
     {
         $this->object = $order instanceof WC_Order ? $order : wc_get_order($order_id);
 
@@ -99,7 +99,11 @@ class ShipmentCreatedEmail extends WC_Email
             'subject' => [
                 'title' => __('Subject', 'ar-design-dpd'),
                 'type' => 'text',
-                'description' => sprintf(__('Available placeholders: %s', 'ar-design-dpd'), '<code>{order_number}</code>, <code>{carrier}</code>, <code>{tracking_number}</code>'),
+                'description' => sprintf(
+                    /* translators: %s: HTML list of supported email placeholders. */
+                    __('Available placeholders: %s', 'ar-design-dpd'),
+                    '<code>{order_number}</code>, <code>{carrier}</code>, <code>{tracking_number}</code>'
+                ),
                 'default' => $this->get_default_subject(),
                 'desc_tip' => true,
             ],

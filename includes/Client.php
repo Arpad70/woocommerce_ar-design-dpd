@@ -40,7 +40,11 @@ class Client
         $methods = ['get', 'post'];
 
         if (!in_array($method, $methods)) {
-            throw new Exception(sprintf(__('Use the correct request method. Possible values are: %s', 'ar-design-dpd'), implode(', ', $methods)));
+            throw new Exception(sprintf(
+                /* translators: %s: comma-separated list of allowed HTTP request methods. */
+                __('Use the correct request method. Possible values are: %s', 'ar-design-dpd'),
+                implode(', ', $methods)
+            ));
         }
 
         $request_data = [
@@ -69,7 +73,11 @@ class Client
 
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
-            throw new Exception(sprintf(__('Something went wrong: %s', 'ar-design-dpd'), $response->get_error_message()));
+            throw new Exception(sprintf(
+                /* translators: %s: low-level HTTP or API error message. */
+                __('Something went wrong: %s', 'ar-design-dpd'),
+                $response->get_error_message()
+            ));
         }
 
         if (empty($response)) {
@@ -270,7 +278,11 @@ class Client
         }
 
         if (is_wp_error($response)) {
-            throw new Exception(sprintf(__('Something went wrong: %s', 'ar-design-dpd'), $response->get_error_message()));
+            throw new Exception(sprintf(
+                /* translators: %s: low-level HTTP or API error message. */
+                __('Something went wrong: %s', 'ar-design-dpd'),
+                $response->get_error_message()
+            ));
         }
 
         $statusCode = (int) wp_remote_retrieve_response_code($response);
@@ -391,7 +403,7 @@ class Client
 
             if (!empty($message['element'])) {
                 $parts[] = sprintf(
-                    /* translators: %s: invalid payload element */
+                    /* translators: %s: invalid payload element name. */
                     __('Element: %s', 'ar-design-dpd'),
                     sanitize_text_field((string) $message['element'])
                 );
@@ -399,7 +411,7 @@ class Client
 
             if (!empty($message['envelope'])) {
                 $parts[] = sprintf(
-                    /* translators: %s: payload envelope */
+                    /* translators: %s: payload envelope name. */
                     __('Envelope: %s', 'ar-design-dpd'),
                     sanitize_text_field((string) $message['envelope'])
                 );

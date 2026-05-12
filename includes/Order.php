@@ -55,7 +55,11 @@ class Order
         }
 
         if (!self::canExportOrder($order)) {
-            Notice::error(sprintf(__('Order %d is already exported to DPD.', 'ar-design-dpd'), $order_id));
+            Notice::error(sprintf(
+                /* translators: %d: WooCommerce order ID. */
+                __('Order %d is already exported to DPD.', 'ar-design-dpd'),
+                $order_id
+            ));
 
             return false;
         }
@@ -82,7 +86,11 @@ class Order
             }
             $order->save_meta_data();
 
-            $message = sprintf(__('Order %d was successfully exported', 'ar-design-dpd'), $order_id);
+            $message = sprintf(
+                /* translators: %d: WooCommerce order ID. */
+                __('Order %d was successfully exported', 'ar-design-dpd'),
+                $order_id
+            );
 
             Notice::success($message);
             $order->add_order_note(Notice::PREFIX . $message);
@@ -136,7 +144,11 @@ class Order
         $order->delete_meta_data(Order::EXPORT_SHIPMENT_ID_META_KEY);
         $order->save_meta_data();
 
-        $message = sprintf(__('Order %d export data was successfully reset', 'ar-design-dpd'), $order_id);
+        $message = sprintf(
+            /* translators: %d: WooCommerce order ID. */
+            __('Order %d export data was successfully reset', 'ar-design-dpd'),
+            $order_id
+        );
 
         Notice::success($message);
 
@@ -164,7 +176,12 @@ class Order
         // Throw error if full name is longer than 35 characters
         $full_name_allowed_length = 35;
         if (strlen($full_name) > $full_name_allowed_length) {
-            throw new \Exception(sprintf(__('Full name %s is longer than %d characters. Please shorten it.', 'ar-design-dpd'), $full_name, $full_name_allowed_length));
+            throw new \Exception(sprintf(
+                /* translators: 1: customer full name, 2: maximum allowed character count. */
+                __('Full name %1$s is longer than %2$d characters. Please shorten it.', 'ar-design-dpd'),
+                $full_name,
+                $full_name_allowed_length
+            ));
         }
 
         $billing_company = $order->get_billing_company();
@@ -175,7 +192,12 @@ class Order
         if ($company) {
             // Throw error if company name is longer than 35 characters
             if (strlen($company) > $company_allowed_length) {
-                throw new \Exception(sprintf(__('Company name %s is longer than %d characters. Please shorten it.', 'ar-design-dpd'), $company, $company_allowed_length));
+                throw new \Exception(sprintf(
+                    /* translators: 1: company name, 2: maximum allowed character count. */
+                    __('Company name %1$s is longer than %2$d characters. Please shorten it.', 'ar-design-dpd'),
+                    $company,
+                    $company_allowed_length
+                ));
             }
 
             $shipment_type = 'b2b';
@@ -546,7 +568,11 @@ class Order
             $package_number = wp_kses_post($order->get_meta(self::EXPORT_PACKAGE_NUMBER_META_KEY, true));
 
             if (!$package_number) {
-                Notice::error(sprintf(__('Order %d does not have the package number and its label couldn\'t be printed.', 'ar-design-dpd'), $order_id));
+                Notice::error(sprintf(
+                    /* translators: %d: WooCommerce order ID. */
+                    __('Order %d does not have the package number and its label couldn\'t be printed.', 'ar-design-dpd'),
+                    $order_id
+                ));
 
                 continue;
             }
@@ -571,7 +597,11 @@ class Order
         $pdf_content = $client->bulkDownloadLabels($package_numbers);
 
         if (!$pdf_content) {
-            Notice::error(sprintf(__('Something went wrong and the PDF content is not valid. Please check orders %s and verify that the package numbers are correct.', 'ar-design-dpd'), implode(', ', $processing_order_ids)));
+            Notice::error(sprintf(
+                /* translators: %s: comma-separated WooCommerce order IDs. */
+                __('Something went wrong and the PDF content is not valid. Please check orders %s and verify that the package numbers are correct.', 'ar-design-dpd'),
+                implode(', ', $processing_order_ids)
+            ));
 
             return false;
         }

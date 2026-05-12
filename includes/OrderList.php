@@ -73,16 +73,12 @@ class OrderList
     /**
      * Add DPD export status column to orders listing grid table
      *
-     * @param [array] $columns
+     * @param array<string, mixed> $columns
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function addOrdersGridDPDExportColumn($columns)
+    public static function addOrdersGridDPDExportColumn(array $columns): array
     {
-        if (!is_array($columns)) {
-            return $columns;
-        }
-
         $new_columns = [];
 
         foreach ($columns as $column_name => $column_info) {
@@ -99,19 +95,19 @@ class OrderList
     /**
      * Populate order DPD export status column value
      *
-     * @param array $column
-     * @param \WC_Order $order
+     * @param string $column
+     * @param \WC_Order|int|null $order_or_order_id
      *
      * @return void
      */
-    public static function addOrderByDPDExportColumn($column, $order_or_order_id = null)
+    public static function addOrderByDPDExportColumn(string $column, \WC_Order|int|null $order_or_order_id = null): void
     {
         if (DpdExportSettings::SETTINGS_ID_KEY !== $column) {
             return;
         }
 
         if (!$order_or_order_id instanceof \WC_Order) {
-            $order = new \WC_Order($order_or_order_id);
+            $order = wc_get_order($order_or_order_id);
         } else {
             $order = $order_or_order_id;
         }
@@ -140,8 +136,6 @@ class OrderList
                 echo '<p style="font-size: 12px; margin-top: 5px;">' . __('Package number', 'ar-design-dpd') . ':<br><strong>' . $dpd_package_number . '</strong></p>';
             }
         }
-
-        return;
     }
 
     /**
@@ -156,7 +150,11 @@ class OrderList
         $order_id = !empty($_GET[self::EXPORT_ORDER_KEY]) ? (int) $_GET[self::EXPORT_ORDER_KEY] : null;
 
         if (!$order_id) {
-            Notice::error(sprintf(__('Wrong order ID %d', 'ar-design-dpd'), $order_id));
+            Notice::error(sprintf(
+                /* translators: %d: invalid WooCommerce order ID. */
+                __('Wrong order ID %d', 'ar-design-dpd'),
+                $order_id
+            ));
 
             return;
         }

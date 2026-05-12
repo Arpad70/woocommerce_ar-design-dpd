@@ -41,7 +41,7 @@ class ShipmentDeliveredEmail extends WC_Email
         return __('Your order has been delivered', 'ar-design-dpd');
     }
 
-    public function trigger($order_id, $shipmentData = [], $order = null)
+    public function trigger(int $order_id, array $shipmentData = [], ?WC_Order $order = null): void
     {
         $this->object = $order instanceof WC_Order ? $order : wc_get_order($order_id);
         if (!$this->object instanceof WC_Order) {
@@ -127,7 +127,11 @@ class ShipmentDeliveredEmail extends WC_Email
             'subject' => [
                 'title' => __('Subject', 'ar-design-dpd'),
                 'type' => 'text',
-                'description' => sprintf(__('Available placeholders: %s', 'ar-design-dpd'), '<code>{order_number}</code>, <code>{customer_first_name}</code>, <code>{tracking_number}</code>'),
+                'description' => sprintf(
+                    /* translators: %s: HTML list of supported email placeholders. */
+                    __('Available placeholders: %s', 'ar-design-dpd'),
+                    '<code>{order_number}</code>, <code>{customer_first_name}</code>, <code>{tracking_number}</code>'
+                ),
                 'default' => $this->get_default_subject(),
                 'desc_tip' => true,
             ],
@@ -160,7 +164,11 @@ class ShipmentDeliveredEmail extends WC_Email
                 'type' => 'text',
                 'default' => $defaultClaimFormUrl,
                 'description' => $defaultClaimFormUrl
-                    ? sprintf(__('Use a URL to your complaint/claim page. If you leave this value unchanged, the detected site page will be used: %s', 'ar-design-dpd'), '<code>' . esc_html($defaultClaimFormUrl) . '</code>')
+                    ? sprintf(
+                        /* translators: %s: detected complaint page URL wrapped in code tags. */
+                        __('Use a URL to your complaint/claim page. If you leave this value unchanged, the detected site page will be used: %s', 'ar-design-dpd'),
+                        '<code>' . esc_html($defaultClaimFormUrl) . '</code>'
+                    )
                     : __('Use a URL to your complaint/claim form page. Interactive forms are not reliably supported in email clients, so a landing page link is the safest option.', 'ar-design-dpd'),
                 'desc_tip' => true,
             ],

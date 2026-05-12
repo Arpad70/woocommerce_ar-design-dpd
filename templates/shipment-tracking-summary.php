@@ -28,11 +28,19 @@ $containerStyle = $type === 'admin'
 
 <div class="ar-design-dpd-shipment-summary" <?php echo $containerStyle; ?>>
     <p>
-        <strong><?php echo esc_html(sprintf(__('%s Shipment', 'ar-design-dpd'), $carrierLabel)); ?></strong><br>
+        <strong><?php echo esc_html(sprintf(
+            /* translators: %s: carrier label shown in the shipment summary, for example DPD. */
+            __('%s Shipment', 'ar-design-dpd'),
+            $carrierLabel
+        )); ?></strong><br>
 
         <?php if ($labelUrl !== '') : ?>
             <a class="button" href="<?php echo esc_url($labelUrl); ?>" target="_blank" rel="noopener noreferrer" style="margin: 6px 0 8px;">
-                <?php echo esc_html(sprintf(__('Download %s label', 'ar-design-dpd'), $carrierLabel)); ?>
+                <?php echo esc_html(sprintf(
+                    /* translators: %s: carrier label shown in the shipment summary, for example DPD. */
+                    __('Download %s label', 'ar-design-dpd'),
+                    $carrierLabel
+                )); ?>
             </a>
             <br>
         <?php endif; ?>

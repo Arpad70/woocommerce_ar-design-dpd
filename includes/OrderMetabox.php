@@ -87,6 +87,7 @@ class OrderMetabox
                 } else {
                     $summary = Tracking::importStatusDataDirectory($directory);
                     Notice::success(sprintf(
+                        /* translators: 1: remote files downloaded, 2: remote files skipped, 3: local files processed, 4: local files skipped, 5: orders updated, 6: unmatched parcels, 7: errors. */
                         __('STATUSDATA sync finished. Remote downloaded: %1$d, remote skipped: %2$d, files processed: %3$d, local skipped: %4$d, orders updated: %5$d, unmatched parcels: %6$d, errors: %7$d.', 'ar-design-dpd'),
                         (int) ($summary['remote_files_downloaded'] ?? 0),
                         (int) ($summary['remote_files_skipped'] ?? 0),
@@ -193,7 +194,11 @@ class OrderMetabox
             }
 
             if ($statusdata_configured) {
-                echo '<p><small>' . esc_html(sprintf(__('STATUSDATA directory: %s', 'ar-design-dpd'), $statusdata_directory)) . '</small></p>';
+                echo '<p><small>' . esc_html(sprintf(
+                    /* translators: %s: absolute STATUSDATA directory path. */
+                    __('STATUSDATA directory: %s', 'ar-design-dpd'),
+                    $statusdata_directory
+                )) . '</small></p>';
                 if ($statusdata_sftp_configured) {
                     echo '<p><small>' . esc_html__('SFTP download is configured and will run before import.', 'ar-design-dpd') . '</small></p>';
                 }
@@ -254,7 +259,11 @@ class OrderMetabox
                 <div class="notice inline notice-success" style="margin: 0 0 12px; padding: 0 10px;">
                     <p>
                         <strong><?php esc_html_e('STATUSDATA tracking import is configured.', 'ar-design-dpd'); ?></strong><br>
-                        <?php echo esc_html(sprintf(__('Directory: %s', 'ar-design-dpd'), $statusdata_directory)); ?>
+                        <?php echo esc_html(sprintf(
+                            /* translators: %s: absolute STATUSDATA directory path. */
+                            __('Directory: %s', 'ar-design-dpd'),
+                            $statusdata_directory
+                        )); ?>
                         <?php if ($statusdata_sftp_configured) : ?>
                             <br><?php esc_html_e('SFTP source is configured and will be synchronized before local import.', 'ar-design-dpd'); ?>
                         <?php endif; ?>
@@ -308,12 +317,20 @@ class OrderMetabox
 			</p>
 
 			<p>
-				<label for="<?php echo esc_attr(Order::REFERENCE_1_META_KEY); ?>"><?php echo sprintf(__('Reference %d', 'ar-design-dpd'), 1); ?>:</label><br>
+                <label for="<?php echo esc_attr(Order::REFERENCE_1_META_KEY); ?>"><?php echo sprintf(
+                    /* translators: %d: reference field number. */
+                    __('Reference %d', 'ar-design-dpd'),
+                    1
+                ); ?>:</label><br>
 				<input type="text" id="<?php echo esc_attr(Order::REFERENCE_1_META_KEY); ?>" name="<?php echo esc_attr(Order::REFERENCE_1_META_KEY); ?>" value="<?php echo esc_attr($reference_1); ?>">
 			</p>
 
 			<p>
-				<label for="<?php echo esc_attr(Order::REFERENCE_2_META_KEY); ?>"><?php echo sprintf(__('Reference %d', 'ar-design-dpd'), 2); ?>:</label><br>
+                <label for="<?php echo esc_attr(Order::REFERENCE_2_META_KEY); ?>"><?php echo sprintf(
+                    /* translators: %d: reference field number. */
+                    __('Reference %d', 'ar-design-dpd'),
+                    2
+                ); ?>:</label><br>
 				<input type="text" id="<?php echo esc_attr(Order::REFERENCE_2_META_KEY); ?>" name="<?php echo esc_attr(Order::REFERENCE_2_META_KEY); ?>" value="<?php echo esc_attr($reference_2); ?>">
 			</p>
 

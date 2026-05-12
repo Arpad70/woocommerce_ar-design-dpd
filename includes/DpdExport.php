@@ -125,7 +125,11 @@ class DpdExport
         }
 
         if (!$countryNumeric) {
-            throw new Exception(sprintf(__('Country %s could not be converted to the numeric ISO code required by DPD shipper API.', 'ar-design-dpd'), (string) $this->{self::CUSTOMER_COUNTRY_KEY}));
+            throw new Exception(sprintf(
+                /* translators: %s: customer country ISO alpha-2 code. */
+                __('Country %s could not be converted to the numeric ISO code required by DPD shipper API.', 'ar-design-dpd'),
+                (string) $this->{self::CUSTOMER_COUNTRY_KEY}
+            ));
         }
 
         $shipment = array_filter([

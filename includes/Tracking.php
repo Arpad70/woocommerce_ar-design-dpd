@@ -916,7 +916,11 @@ class Tracking
 
         $serviceLabel = self::getStatusDataServiceLabel($serviceCode);
         if ($serviceLabel !== '') {
-            $parts[] = sprintf(__('Service: %s', 'ar-design-dpd'), $serviceLabel);
+            $parts[] = sprintf(
+                /* translators: %s: DPD service label. */
+                __('Service: %s', 'ar-design-dpd'),
+                $serviceLabel
+            );
         }
 
         $additionalLabels = [];
@@ -926,7 +930,11 @@ class Tracking
         }
 
         if ($additionalLabels !== []) {
-            $parts[] = sprintf(__('Additional codes: %s', 'ar-design-dpd'), implode(', ', $additionalLabels));
+            $parts[] = sprintf(
+                /* translators: %s: comma-separated DPD additional service codes. */
+                __('Additional codes: %s', 'ar-design-dpd'),
+                implode(', ', $additionalLabels)
+            );
         }
 
         if ($infoText !== '') {
@@ -981,7 +989,11 @@ class Tracking
             'SO' => __('Sorter pass-through', 'ar-design-dpd'),
         ];
 
-        return isset($labels[$scanCode]) ? (string) $labels[$scanCode] : sprintf(__('Scan %s', 'ar-design-dpd'), $scanCode);
+        return isset($labels[$scanCode]) ? (string) $labels[$scanCode] : sprintf(
+            /* translators: %s: raw DPD STATUSDATA scan code. */
+            __('Scan %s', 'ar-design-dpd'),
+            $scanCode
+        );
     }
 
     private static function getStatusDataServiceLabel(string $serviceCode): string
@@ -1041,6 +1053,7 @@ class Tracking
 
         if ($currentStatus && $currentStatus !== $previousStatus) {
             $order->add_order_note(sprintf(
+                /* translators: 1: current tracking status label, 2: optional location in parentheses. */
                 __('DPD tracking update: %1$s%2$s', 'ar-design-dpd'),
                 $currentLabel ?: $currentStatus,
                 $currentLocation ? ' (' . $currentLocation . ')' : ''

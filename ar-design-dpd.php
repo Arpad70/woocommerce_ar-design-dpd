@@ -3,7 +3,7 @@
 /*
  * Plugin Name: AR Design DPD for WooCommerce
  * Description: Samostatný DPD modul pre WooCommerce spravovaný Arpád Horák. Fork vychádza z pôvodnej integrácie Webikon, ktorá zostáva uvedená ako coworker foundation projektu.
- * Version: 8.6.1
+ * Version: 8.6.2
  * Author: Arpád Horák
  * Author URI: https://arpad-horak.cz
  * Update URI: https://github.com/Arpad70/woocommerce_ar-design-dpd
@@ -34,7 +34,7 @@ define('AR_DESIGN_DPD_PLUGIN_INDEX', __FILE__);
 define('AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION', '7.0');
 define('AR_DESIGN_DPD_PLUGIN_ASSETS_URL', plugins_url(AR_DESIGN_DPD_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR));
 define('AR_DESIGN_DPD_PLUGIN_TEMPLATES_PATH', AR_DESIGN_DPD_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR);
-define('AR_DESIGN_DPD_VERSION', '8.6.1');
+define('AR_DESIGN_DPD_VERSION', '8.6.2');
 define('AR_DESIGN_DPD_BASENAME', plugin_basename(__FILE__));
 define('AR_DESIGN_DPD_REPOSITORY', 'Arpad70/woocommerce_ar-design-dpd');
 define('AR_DESIGN_DPD_TEXT_DOMAIN', 'ar-design-dpd');
@@ -55,6 +55,7 @@ foreach ($legacy_constants as $legacy_constant_name => $legacy_constant_value) {
 }
 
 require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'Updater.php';
+require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'RollbackManager.php';
 
 if (class_exists(__NAMESPACE__ . '\\ArDesignDpdUpdater') && !class_exists('WcDPD\\ArDesignDpdUpdater', false)) {
     class_alias(__NAMESPACE__ . '\\ArDesignDpdUpdater', 'WcDPD\\ArDesignDpdUpdater');
@@ -155,3 +156,9 @@ $ar_design_dpd_updater = new \ArDesign\DPD\ArDesignDpdUpdater(
     AR_DESIGN_DPD_VERSION
 );
 $ar_design_dpd_updater->register();
+
+$ar_design_dpd_rollback_manager = new \ArDesign\DPD\ArDesignDpdRollbackManager(
+    AR_DESIGN_DPD_BASENAME,
+    AR_DESIGN_DPD_PLUGIN_PATH
+);
+$ar_design_dpd_rollback_manager->register();

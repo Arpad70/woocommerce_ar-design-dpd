@@ -567,12 +567,12 @@ msgid "Order %d export data was successfully reset"
 msgstr "Údaje exportu pre objednávku %d boli úspešne resetované"
 
 #: includes/Order.php:135
-msgid "Full name %s is longer than %d characters. Please shorten it."
-msgstr "Celé meno %s je dlhšie ako %d znakov. Prosím, skráťte ho."
+msgid "Full name %1$s is longer than %2$d characters. Please shorten it."
+msgstr "Celé meno %1$s je dlhšie ako %2$d znakov. Prosím, skráťte ho."
 
 #: includes/Order.php:146
-msgid "Company name %s is longer than %d characters. Please shorten it."
-msgstr "Názov spoločnosti %s je dlhší ako %d znakov. Prosím, skráťte ho."
+msgid "Company name %1$s is longer than %2$d characters. Please shorten it."
+msgstr "Názov spoločnosti %1$s je dlhší ako %2$d znakov. Prosím, skráťte ho."
 
 #: includes/Order.php:494
 msgid ""
@@ -731,6 +731,530 @@ msgstr "Vybrať DPD Pickup/Pickup Station"
 #: templates/parcelshop-shipping-method-content.php:65
 msgid "Selected parcelshop"
 msgstr "Vybraná DPD Pickup/Pickup Station"
+
+#: includes/DpdParcelShopShippingMethod.php
+msgid "Method title"
+msgstr "Názov metódy"
+
+#: includes/DpdParcelShopShippingMethod.php
+msgid "Title shown to customers during checkout."
+msgstr "Názov zobrazený zákazníkom v pokladni."
+
+#: includes/DpdParcelShopShippingMethod.php
+msgid "Choose how this DPD shipping price should be calculated."
+msgstr "Vyberte, ako sa má počítať cena tejto DPD dopravy."
+
+#: includes/DpdParcelShopShippingMethod.php
+msgid "Base shipping fee charged for this DPD method."
+msgstr "Základný poplatok za dopravu účtovaný pre túto DPD metódu."
+
+#: includes/DpdParcelShopShippingMethod.php
+msgid "Add shipping rates based on the total weight of products in the cart."
+msgstr "Pridajte sadzby dopravy na základe celkovej hmotnosti produktov v košíku."
+
+#: includes/DpdParcelShopShippingMethod.php
+msgid "Add row"
+msgstr "Pridať riadok"
+
+#: includes/OrderMetabox.php
+msgid "Security check failed."
+msgstr "Bezpečnostná kontrola zlyhala."
+
+#: includes/Tracking.php
+msgid "Shipment delivery confirmed by carrier."
+msgstr "Doručenie zásielky bolo potvrdené dopravcom."
+
+#: includes/Tracking.php
+msgid "Invoice was prepared for cash on delivery follow-up email."
+msgstr "Faktúra bola pripravená pre následný e-mail pri dobierke."
+
+#: includes/DpdExport.php
+msgid "DPD shipper API returned an invalid response."
+msgstr "DPD shipper API vrátilo neplatnú odpoveď."
+
+#: includes/DpdExport.php
+msgid "DPD shipper API returned an error."
+msgstr "DPD shipper API vrátilo chybu."
+
+#: includes/DpdExport.php
+msgid "DPD shipper API rejected the shipment."
+msgstr "DPD shipper API zamietlo zásielku."
+
+#: includes/DpdExport.php
+msgid "Element: %s"
+msgstr "Prvok: %s"
+
+#: includes/DpdExport.php
+msgid "Envelope: %s"
+msgstr "Obálka: %s"
+
+#: includes/DpdExportSettings.php
+msgid "DELIS ID"
+msgstr "DELIS ID"
+
+#: includes/DpdExportSettings.php
+msgid "Unique customer identifier assigned by DPD for shipper API."
+msgstr "Jedinečný identifikátor zákazníka pridelený spoločnosťou DPD pre shipper API."
+
+#: includes/DpdExportSettings.php
+msgid "DPD login email"
+msgstr "Prihlasovací e-mail do DPD"
+
+#: includes/DpdExportSettings.php
+msgid "Login email used for DPD shipper API authentication."
+msgstr "Prihlasovací e-mail použitý na autentifikáciu k DPD shipper API."
+
+#: includes/DpdExportSettings.php
+msgid "DPD API key"
+msgstr "DPD API kľúč"
+
+#: includes/DpdExportSettings.php
+msgid "Default DPD product"
+msgstr "Predvolený DPD produkt"
+
+#: includes/DpdExportSettings.php
+msgid "Label print format"
+msgstr "Formát tlače štítkov"
+
+#: includes/DpdExportSettings.php
+msgid "Label output format used for DPD shipper label generation."
+msgstr "Formát výstupu štítku použitý pri generovaní štítkov DPD shipper."
+
+#: includes/DpdExportSettings.php
+msgid "Enable tracking sync"
+msgstr "Povoliť synchronizáciu sledovania"
+
+#: includes/DpdExportSettings.php
+msgid "STATUSDATA directory"
+msgstr "Adresár STATUSDATA"
+
+#: includes/DpdExportSettings.php
+msgid "STATUSDATA SFTP host"
+msgstr "STATUSDATA SFTP hostiteľ"
+
+#: includes/DpdExportSettings.php
+msgid "STATUSDATA SFTP port"
+msgstr "STATUSDATA SFTP port"
+
+#: includes/DpdExportSettings.php
+msgid "Optional SFTP port. Default is 22."
+msgstr "Voliteľný SFTP port. Predvolená hodnota je 22."
+
+#: includes/DpdExportSettings.php
+msgid "STATUSDATA SFTP username"
+msgstr "STATUSDATA SFTP používateľské meno"
+
+#: includes/DpdExportSettings.php
+msgid "Username used for SFTP access to STATUSDATA files."
+msgstr "Používateľské meno použité pre SFTP prístup k súborom STATUSDATA."
+
+#: includes/DpdExportSettings.php
+msgid "STATUSDATA SFTP password"
+msgstr "STATUSDATA SFTP heslo"
+
+#: includes/DpdExportSettings.php
+msgid "STATUSDATA SFTP remote directory"
+msgstr "STATUSDATA SFTP vzdialený adresár"
+
+#: includes/DpdExportSettings.php
+msgid "STATUSDATA SFTP archive directory"
+msgstr "STATUSDATA SFTP archívny adresár"
+
+#: includes/DpdExportSettings.php
+msgid "Autocomplete delivered orders"
+msgstr "Automaticky dokončiť doručené objednávky"
+
+#: includes/Order.php
+msgid "Please select at least one order."
+msgstr "Vyberte aspoň jednu objednávku."
+
+#: includes/OrderMetabox.php
+msgid "STATUSDATA directory is not configured or not readable."
+msgstr "Adresár STATUSDATA nie je nakonfigurovaný alebo nie je čitateľný."
+
+#: includes/OrderMetabox.php
+msgid "STATUSDATA directory: %s"
+msgstr "Adresár STATUSDATA: %s"
+
+#: includes/OrderMetabox.php
+msgid "SFTP download is configured and will run before import."
+msgstr "SFTP sťahovanie je nakonfigurované a spustí sa pred importom."
+
+#: includes/OrderMetabox.php
+msgid "Import STATUSDATA now"
+msgstr "Importovať STATUSDATA teraz"
+
+#: includes/OrderMetabox.php
+msgid "DPD SK shipper export mode is active."
+msgstr "Režim exportu DPD SK shipper je aktívny."
+
+#: includes/OrderMetabox.php
+msgid "STATUSDATA tracking import is configured."
+msgstr "Import sledovania STATUSDATA je nakonfigurovaný."
+
+#: includes/OrderMetabox.php
+msgid "Directory: %s"
+msgstr "Adresár: %s"
+
+#: includes/OrderMetabox.php
+msgid "SFTP source is configured and will be synchronized before local import."
+msgstr "Zdroj SFTP je nakonfigurovaný a bude synchronizovaný pred lokálnym importom."
+
+#: includes/OrderMetabox.php
+msgid "Pickup address ID"
+msgstr "ID adresy vyzdvihnutia"
+
+#: includes/OrderMetabox.php
+msgid "Optional. Leave empty to use the default shipment weight of 3.00 kg."
+msgstr "Voliteľné. Nechajte prázdne pre predvolenú hmotnosť zásielky 3,00 kg."
+
+#: includes/Shipment.php includes/Tracking.php
+msgid "Shipment exported to DPD"
+msgstr "Zásielka exportovaná do DPD"
+
+#: includes/Shipment.php includes/Tracking.php
+msgid "Shipment delivered"
+msgstr "Zásielka doručená"
+
+#: includes/ShipmentCreatedEmail.php
+msgid "Shipment handed over"
+msgstr "Zásielka odovzdaná dopravcovi"
+
+#: includes/ShipmentCreatedEmail.php
+msgid "Your order #{order_number} is on its way"
+msgstr "Vaša objednávka č. {order_number} je na ceste"
+
+#: includes/ShipmentCreatedEmail.php
+msgid "We have handed your shipment to the carrier"
+msgstr "Vašu zásielku sme odovzdali dopravcovi"
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Enable/Disable"
+msgstr "Povoliť/Zakázať"
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Enable this email notification"
+msgstr "Povoliť toto e-mailové upozornenie"
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Subject"
+msgstr "Predmet"
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Available placeholders: %s"
+msgstr "Dostupné zástupné symboly: %s"
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Email heading"
+msgstr "Nadpis e-mailu"
+
+#: includes/ShipmentCreatedEmail.php
+msgid "Intro text"
+msgstr "Úvodný text"
+
+#: includes/ShipmentCreatedEmail.php
+msgid "Tracking button text"
+msgstr "Text tlačidla sledovania"
+
+#: includes/ShipmentCreatedEmail.php
+msgid "Track shipment"
+msgstr "Sledovať zásielku"
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Additional content"
+msgstr "Dodatočný obsah"
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Text to appear below the main email content."
+msgstr "Text zobrazený pod hlavným obsahom e-mailu."
+
+#: includes/ShipmentCreatedEmail.php includes/ShipmentDeliveredEmail.php
+msgid "Thanks for shopping with us."
+msgstr "Ďakujeme za nákup u nás."
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Shipment delivered follow-up"
+msgstr "Následný e-mail po doručení zásielky"
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Thank you for your order #{order_number}"
+msgstr "Ďakujeme za vašu objednávku č. {order_number}"
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Your order has been delivered"
+msgstr "Vaša objednávka bola doručená"
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Automatic delivery follow-up email was sent to the customer."
+msgstr "Automatický následný e-mail po doručení bol odoslaný zákazníkovi."
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Thank you message"
+msgstr "Poďakovanie"
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Promo message"
+msgstr "Promo správa"
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Complaint information"
+msgstr "Informácie o reklamácii"
+
+#: includes/ShipmentDeliveredEmail.php
+msgid "Claim form URL"
+msgstr "URL formulára reklamácie"
+
+#: includes/Tracking.php
+msgid "Every 30 minutes (AR Design DPD tracking)"
+msgstr "Každých 30 minút (sledovanie AR Design DPD)"
+
+#: includes/Tracking.php
+msgid "Returning to sender"
+msgstr "Vrátenie odosielateľovi"
+
+#: includes/Tracking.php
+msgid "Picked up by courier"
+msgstr "Prevzaté kuriérom"
+
+#: includes/Tracking.php
+msgid "In transit"
+msgstr "V preprave"
+
+#: includes/Tracking.php
+msgid "Out for delivery"
+msgstr "Na doručenie"
+
+#: includes/Tracking.php
+msgid "Delivered"
+msgstr "Doručené"
+
+#: includes/Tracking.php
+msgid "Delivery attempt unsuccessful"
+msgstr "Pokus o doručenie neúspešný"
+
+#: includes/Tracking.php
+msgid "Ready for pickup point collection"
+msgstr "Pripravené na vyzdvihnutie na odbernom mieste"
+
+#: includes/Tracking.php
+msgid "Returned by courier"
+msgstr "Vrátené kuriérom"
+
+#: includes/Tracking.php
+msgid "Customs clearance"
+msgstr "Colné konanie"
+
+#: includes/Tracking.php
+msgid "Additional shipment information"
+msgstr "Dodatočné informácie o zásielke"
+
+#: includes/Tracking.php
+msgid "Service: %s"
+msgstr "Služba: %s"
+
+#: includes/Tracking.php
+msgid "Additional codes: %s"
+msgstr "Dodatočné kódy: %s"
+
+#: includes/Tracking.php
+msgid "Consolidation"
+msgstr "Konsolidácia"
+
+#: includes/Tracking.php
+msgid "Inbound"
+msgstr "Príjem"
+
+#: includes/Tracking.php
+msgid "Driver return"
+msgstr "Návrat kuriéra"
+
+#: includes/Tracking.php
+msgid "Pick-up"
+msgstr "Vyzdvihnutie"
+
+#: includes/Tracking.php
+msgid "System return"
+msgstr "Systémové vrátenie"
+
+#: includes/Tracking.php
+msgid "Warehouse"
+msgstr "Sklad"
+
+#: includes/Tracking.php
+msgid "Again out for delivery"
+msgstr "Opätovne na doručenie"
+
+#: includes/Tracking.php
+msgid "HUB scan"
+msgstr "Sken na HUB-e"
+
+#: includes/Tracking.php
+msgid "Customs clearance process"
+msgstr "Proces colného konania"
+
+#: includes/Tracking.php
+msgid "Delivery attempt not successful"
+msgstr "Pokus o doručenie nebol úspešný"
+
+#: includes/Tracking.php
+msgid "Driver pick-up"
+msgstr "Vyzdvihnutie kuriérom"
+
+#: includes/Tracking.php
+msgid "Export / Import cleared"
+msgstr "Export / import vybavený"
+
+#: includes/Tracking.php
+msgid "Additional information"
+msgstr "Dodatočné informácie"
+
+#: includes/Tracking.php
+msgid "Loading"
+msgstr "Nakládka"
+
+#: includes/Tracking.php
+msgid "Arrived at pickup point"
+msgstr "Dorazilo na odberné miesto"
+
+#: includes/Tracking.php
+msgid "Sorter pass-through"
+msgstr "Prechod triedičkou"
+
+#: includes/Tracking.php
+msgid "Scan %s"
+msgstr "Sken %s"
+
+#: includes/Tracking.php
+msgid "System return to sender"
+msgstr "Systémové vrátenie odosielateľovi"
+
+#: includes/Tracking.php
+msgid "System return to sending depot"
+msgstr "Systémové vrátenie na odosielacie depo"
+
+#: includes/Tracking.php
+msgid "Normal parcel B2C"
+msgstr "Štandardný balík B2C"
+
+#: includes/Tracking.php
+msgid "Small parcel B2C"
+msgstr "Malý balík B2C"
+
+#: includes/Tracking.php
+msgid "Wrong address"
+msgstr "Nesprávna adresa"
+
+#: includes/Tracking.php
+msgid "Refused by consignee"
+msgstr "Odmietnuté príjemcom"
+
+#: includes/Tracking.php
+msgid "Consignee not present - first notification"
+msgstr "Príjemca nezastihnutý – prvé oznámenie"
+
+#: includes/Tracking.php
+msgid "Closed"
+msgstr "Zatvorené"
+
+#: includes/Tracking.php
+msgid "Consignee on holiday"
+msgstr "Príjemca na dovolenke"
+
+#: includes/Tracking.php
+msgid "Access code required"
+msgstr "Vyžaduje sa prístupový kód"
+
+#: includes/Tracking.php
+msgid "Delay due to unknown reason"
+msgstr "Meškanie z neznámeho dôvodu"
+
+#: includes/Tracking.php
+msgid "Parcel not ready for shipment"
+msgstr "Balík nie je pripravený na odoslanie"
+
+#: includes/Tracking.php
+msgid "Appointment scheduled"
+msgstr "Termín doručenia naplánovaný"
+
+#: includes/Tracking.php
+msgid "Address changed"
+msgstr "Adresa bola zmenená"
+
+#: includes/Tracking.php
+msgid "File import"
+msgstr "Import súboru"
+
+#: includes/Tracking.php
+msgid "Canceled"
+msgstr "Zrušené"
+
+#: includes/Tracking.php
+msgid "DPD tracking update: %1$s%2$s"
+msgstr "Aktualizácia sledovania DPD: %1$s%2$s"
+
+#: includes/Tracking.php
+msgid "DPD delivery status confirmed successful delivery."
+msgstr "Stav DPD potvrdil úspešné doručenie."
+
+#: includes/Updater.php
+msgid "Samostatný DPD modul pre WooCommerce spravovaný AR Design."
+msgstr "Samostatný DPD modul pre WooCommerce spravovaný AR Design."
+
+#: includes/Updater.php
+msgid "Changelog nie je dostupný."
+msgstr "Changelog nie je dostupný."
+
+#: templates/emails/customer-shipment-created.php
+msgid "Carrier"
+msgstr "Dopravca"
+
+#: templates/emails/customer-shipment-created.php
+msgid "Tracking number"
+msgstr "Sledovacie číslo"
+
+#: templates/emails/customer-shipment-delivered.php
+msgid "Your invoice is attached to this email."
+msgstr "Vaša faktúra je priložená k tomuto e-mailu."
+
+#: templates/emails/customer-shipment-delivered.php
+msgid "Complaint procedure and claim page"
+msgstr "Stránka reklamácií a uplatnenia nároku"
+
+#: templates/shipment-tracking-summary.php
+msgid "%s Shipment"
+msgstr "Zásielka %s"
+
+#: templates/shipment-tracking-summary.php
+msgid "Download %s label"
+msgstr "Stiahnuť štítok %s"
+
+#: templates/shipment-tracking-summary.php
+msgid "Tracking"
+msgstr "Sledovanie"
+
+#: templates/shipment-tracking-summary.php
+msgid "Carrier cost"
+msgstr "Cena dopravcu"
+
+#: templates/shipment-tracking-summary.php
+msgid "Current status"
+msgstr "Aktuálny stav"
+
+#: templates/shipment-tracking-summary.php
+msgid "Status date"
+msgstr "Dátum stavu"
+
+#: templates/shipment-tracking-summary.php
+msgid "Location"
+msgstr "Miesto"
+
+#: templates/shipment-tracking-summary.php
+msgid "Last sync"
+msgstr "Posledná synchronizácia"
+
+#: templates/shipment-tracking-summary.php
+msgid "Last tracking error"
+msgstr "Posledná chyba sledovania"
 
 #~ msgid "If you exceed the price in the cart, shipping will be free."
 #~ msgstr "Ak prekročíte cenu v košíku, poštovné bude zadarmo."

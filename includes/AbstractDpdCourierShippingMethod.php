@@ -121,8 +121,16 @@ abstract class AbstractDpdCourierShippingMethod extends \WC_Shipping_Method
                 'description' => __('Add shipping rates based on the total weight of products in the cart.', 'ar-design-dpd'),
                 'desc_tip' => true,
                 'label_text' => __('Shipping rate', 'ar-design-dpd'),
-                'min_weight_input_text' => sprintf(__('Min weight (%s)', 'ar-design-dpd'), $weight_unit),
-                'max_weight_input_text' => sprintf(__('Max weight (%s)', 'ar-design-dpd'), $weight_unit),
+                'min_weight_input_text' => sprintf(
+                    /* translators: %s: WooCommerce weight unit, for example kg. */
+                    __('Min weight (%s)', 'ar-design-dpd'),
+                    $weight_unit
+                ),
+                'max_weight_input_text' => sprintf(
+                    /* translators: %s: WooCommerce weight unit, for example kg. */
+                    __('Max weight (%s)', 'ar-design-dpd'),
+                    $weight_unit
+                ),
                 'price_input_text' => __('Price', 'ar-design-dpd') . ' ' . (wc_prices_include_tax() ? __('with', 'ar-design-dpd') : __('without', 'ar-design-dpd')) . ' ' . __('tax', 'ar-design-dpd'),
                 'min_weight_input_placeholder_text' => __('Min weight', 'ar-design-dpd'),
                 'max_weight_input_placeholder_text' => __('Max weight', 'ar-design-dpd'),
