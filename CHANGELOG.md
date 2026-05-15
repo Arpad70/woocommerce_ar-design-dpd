@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.6.3 - 2026-05-15
+- Added energy surcharge settings, monitoring helpers and shipment surcharge handling.
+- Published follow-up release to align local shipping changes with the GitHub release state.
+
 ## 8.6.1 - 2026-05-12
 - Stopped the DPD shipment summary from rendering non-DPD shipments after the carrier modules were split out.
 

@@ -21,6 +21,10 @@ class Automation
             return;
         }
 
+        if ((string) ($shipmentData['carrier'] ?? '') !== Shipment::CARRIER) {
+            return;
+        }
+
         if ($order->get_meta(Shipment::DELIVERY_WORKFLOW_PROCESSED_AT_META_KEY, true)) {
             return;
         }

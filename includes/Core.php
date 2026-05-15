@@ -15,7 +15,9 @@ class Core
     public static function init()
     {
         // Initialize classes
+        EnergySurchargeMonitor::init();
         DpdExportSettings::init();
+        EnergySurcharge::init();
         Assets::init();
         Ajax::init();
         \ArDesign\DPD\Automation::init();

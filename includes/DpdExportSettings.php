@@ -32,6 +32,9 @@ class DpdExportSettings extends \WC_Shipping_Method
     public const STATUSDATA_SFTP_REMOTE_DIRECTORY_OPTION_KEY = 'dpd_statusdata_sftp_remote_directory';
     public const STATUSDATA_SFTP_ARCHIVE_DIRECTORY_OPTION_KEY = 'dpd_statusdata_sftp_archive_directory';
     public const TRACKING_AUTO_COMPLETE_ORDER_OPTION_KEY = 'dpd_tracking_auto_complete_order';
+    public const ENERGY_SURCHARGE_PERCENT_OPTION_KEY = 'dpd_energy_surcharge_percent';
+    public const ENERGY_SURCHARGE_FIXED_OPTION_KEY = 'dpd_energy_surcharge_fixed';
+    public const TOLL_SURCHARGE_PER_KG_OPTION_KEY = 'dpd_toll_surcharge_per_kg';
 
     public ?string $dpd_delis_id = null;
     public ?string $dpd_api_key = null;
@@ -593,8 +596,59 @@ class DpdExportSettings extends \WC_Shipping_Method
                 'default' => 'no',
                 'description' => __('When enabled, DPD delivery confirmation may set the WooCommerce order to completed immediately.', 'ar-design-dpd'),
                 'desc_tip' => true,
+            ],
+            self::ENERGY_SURCHARGE_PERCENT_OPTION_KEY => [
+                'title' => __('Energetický poplatok (%)', 'ar-design-dpd'),
+                'type' => 'text',
+                'default' => '0',
+                'desc' => __('Percentuálny energetický poplatok aplikovaný na všetky DPD sadzby dopravy (napr. 9.1).', 'ar-design-dpd'),
+                'desc_tip' => false,
+                'placeholder' => '0',
+            ],
+            self::ENERGY_SURCHARGE_FIXED_OPTION_KEY => [
+                'title' => __('Energetický poplatok (pevná suma)', 'ar-design-dpd'),
+                'type' => 'text',
+                'default' => '0',
+                'desc' => __('Pevná suma energetického poplatku pripočítaná raz ku každej DPD sadzbe dopravy.', 'ar-design-dpd'),
+                'desc_tip' => false,
+                'placeholder' => wc_format_localized_price(0),
+            ],
+            self::TOLL_SURCHARGE_PER_KG_OPTION_KEY => [
+                'title' => __('Mýtny poplatok (za kg)', 'ar-design-dpd'),
+                'type' => 'text',
+                'default' => '0',
+                'desc' => __('Mýtny poplatok za každý začatý kilogram zásielky (napr. 0.033).', 'ar-design-dpd'),
+                'desc_tip' => false,
+                'placeholder' => '0.000',
+            ],
+            [
+                'type' => 'info',
+                'id' => self::SETTINGS_ID_KEY . '_surcharge_sync_info',
+                'title' => __('Kontrola cen z CRONu', 'ar-design-dpd'),
+                'text' => \ArDesign\DPD\EnergySurchargeMonitor::getAdminStatusHtml(),
+                'is_option' => false,
+                'row_class' => 'ard-surcharge-sync-info',
             ]
         ];
+
+        $this->form_fields = self::injectEnergySurchargeHelpers($this->form_fields);
+    }
+
+    private static function injectEnergySurchargeHelpers(array $fields): array
+    {
+        $helpers = \ArDesign\DPD\EnergySurchargeMonitor::getHelperTexts();
+
+        foreach ($helpers as $fieldKey => $helperText) {
+            if (!isset($fields[$fieldKey])) {
+                continue;
+            }
+
+            $baseDescription = (string) ($fields[$fieldKey]['desc'] ?? $fields[$fieldKey]['description'] ?? '');
+            $fields[$fieldKey]['desc'] = trim($baseDescription . ' ' . $helperText);
+            $fields[$fieldKey]['desc_tip'] = false;
+        }
+
+        return $fields;
     }
 
     /**
@@ -762,6 +816,9 @@ class DpdExportSettings extends \WC_Shipping_Method
             self::STATUSDATA_SFTP_REMOTE_DIRECTORY_OPTION_KEY => isset($settings[self::STATUSDATA_SFTP_REMOTE_DIRECTORY_OPTION_KEY]) && !empty($settings[self::STATUSDATA_SFTP_REMOTE_DIRECTORY_OPTION_KEY]) ? sanitize_text_field($settings[self::STATUSDATA_SFTP_REMOTE_DIRECTORY_OPTION_KEY]) : '',
             self::STATUSDATA_SFTP_ARCHIVE_DIRECTORY_OPTION_KEY => isset($settings[self::STATUSDATA_SFTP_ARCHIVE_DIRECTORY_OPTION_KEY]) && !empty($settings[self::STATUSDATA_SFTP_ARCHIVE_DIRECTORY_OPTION_KEY]) ? sanitize_text_field($settings[self::STATUSDATA_SFTP_ARCHIVE_DIRECTORY_OPTION_KEY]) : '',
             self::TRACKING_AUTO_COMPLETE_ORDER_OPTION_KEY => isset($settings[self::TRACKING_AUTO_COMPLETE_ORDER_OPTION_KEY]) && !empty($settings[self::TRACKING_AUTO_COMPLETE_ORDER_OPTION_KEY]) ? sanitize_text_field($settings[self::TRACKING_AUTO_COMPLETE_ORDER_OPTION_KEY]) : 'no',
+            self::ENERGY_SURCHARGE_PERCENT_OPTION_KEY => isset($settings[self::ENERGY_SURCHARGE_PERCENT_OPTION_KEY]) && $settings[self::ENERGY_SURCHARGE_PERCENT_OPTION_KEY] !== '' ? sanitize_text_field((string) $settings[self::ENERGY_SURCHARGE_PERCENT_OPTION_KEY]) : '0',
+            self::ENERGY_SURCHARGE_FIXED_OPTION_KEY => isset($settings[self::ENERGY_SURCHARGE_FIXED_OPTION_KEY]) && $settings[self::ENERGY_SURCHARGE_FIXED_OPTION_KEY] !== '' ? sanitize_text_field((string) $settings[self::ENERGY_SURCHARGE_FIXED_OPTION_KEY]) : '0',
+            self::TOLL_SURCHARGE_PER_KG_OPTION_KEY => isset($settings[self::TOLL_SURCHARGE_PER_KG_OPTION_KEY]) && $settings[self::TOLL_SURCHARGE_PER_KG_OPTION_KEY] !== '' ? sanitize_text_field((string) $settings[self::TOLL_SURCHARGE_PER_KG_OPTION_KEY]) : '0',
         ];
     }
 

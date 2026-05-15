@@ -93,6 +93,10 @@ class Shipment
     {
         $carrier = (string) ($shipmentData['carrier'] ?? $order->get_meta(self::CARRIER_META_KEY, true) ?: self::CARRIER);
 
+        if (!self::canUpdateSharedShipmentData($order, $carrier)) {
+            return;
+        }
+
         $order->update_meta_data(self::CARRIER_META_KEY, $carrier);
         $order->update_meta_data(self::REFERENCE_META_KEY, (string) ($shipmentData['reference'] ?? ''));
         $order->update_meta_data(self::PRIMARY_TRACKING_NUMBER_META_KEY, (string) ($shipmentData['tracking_number'] ?? ''));
@@ -210,5 +214,40 @@ class Shipment
         }
 
         return str_contains($trackingUrl, 'tracking.dpd.sk');
+    }
+
+    private static function canUpdateSharedShipmentData(\WC_Order $order, string $carrier): bool
+    {
+        $existingCarrier = (string) $order->get_meta(self::CARRIER_META_KEY, true);
+
+        if ($existingCarrier === '' || $existingCarrier === $carrier) {
+            return true;
+        }
+
+        return self::orderUsesCarrier($order, $carrier);
+    }
+
+    private static function orderUsesCarrier(\WC_Order $order, string $carrier): bool
+    {
+        if ($carrier !== self::CARRIER) {
+            return false;
+        }
+
+        foreach ($order->get_shipping_methods() as $shippingMethod) {
+            if (!is_object($shippingMethod) || !method_exists($shippingMethod, 'get_method_id')) {
+                continue;
+            }
+
+            $methodId = sanitize_key((string) $shippingMethod->get_method_id());
+            if (0 === strpos($methodId, 'wc_dpd_') || false !== strpos($methodId, 'dpd')) {
+                return true;
+            }
+
+            if (in_array($methodId, ['slovakparcelservice_address', 'slovakparcelservice_pickupplace'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
