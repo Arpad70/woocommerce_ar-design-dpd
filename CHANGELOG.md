@@ -1,5 +1,8 @@
 # Changelog
 
+## 8.6.6 - 2026-05-18
+- Promoted the DPD standalone release to supersede `8.6.5` with the same ParcelShop COD metadata and repair improvements.
+
 ## 8.6.5 - 2026-05-18
 - Persisted DPD ParcelShop COD and card capability metadata from checkout/session data so new COD parcelshop orders no longer export stale empty capability flags.
 - Added a ParcelShop capability backfill path for existing COD orders, including an admin order-detail repair button and a CLI helper for manual repair.
