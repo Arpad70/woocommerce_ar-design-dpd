@@ -52,6 +52,166 @@ class Ajax
         return null;
     }
 
+    private static function normalizeBooleanString($value): string
+    {
+        if ($value === '' || $value === null) {
+            return '';
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_numeric($value)) {
+            return ((int) $value) === 1 ? 'true' : 'false';
+        }
+
+        $normalized = strtolower(trim((string) $value));
+
+        if (in_array($normalized, ['1', 'true', 'yes', 'y'], true)) {
+            return 'true';
+        }
+
+        if (in_array($normalized, ['0', 'false', 'no', 'n'], true)) {
+            return 'false';
+        }
+
+        return '';
+    }
+
+    private static function extractParcelshopProperty(array $parcelshop, string $propertyKey)
+    {
+        $properties = $parcelshop['properties'] ?? null;
+
+        if (!is_array($properties)) {
+            return null;
+        }
+
+        if (array_key_exists($propertyKey, $properties)) {
+            return $properties[$propertyKey];
+        }
+
+        foreach ($properties as $property) {
+            if (!is_array($property)) {
+                continue;
+            }
+
+            $candidateKey = isset($property['key']) ? (string) $property['key'] : (string) ($property['name'] ?? '');
+            if ($candidateKey !== $propertyKey) {
+                continue;
+            }
+
+            return $property['value'] ?? null;
+        }
+
+        return null;
+    }
+
+    private static function parcelshopHasService(array $parcelshop, string $serviceCode): bool
+    {
+        $services = $parcelshop['services'] ?? null;
+
+        if (!is_array($services)) {
+            return false;
+        }
+
+        $codes = $services['code'] ?? $services;
+        if (!is_array($codes)) {
+            return false;
+        }
+
+        return in_array($serviceCode, array_map('strval', $codes), true);
+    }
+
+    private static function findMatchingParcelshop(array $parcelshops, array $chosenParcelshopData): ?array
+    {
+        $parcelshopId = (string) ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] ?? '');
+        $parcelshopPusId = (string) ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] ?? '');
+
+        foreach ($parcelshops as $parcelshop) {
+            if (!is_array($parcelshop)) {
+                continue;
+            }
+
+            $candidateId = isset($parcelshop['id']) ? (string) $parcelshop['id'] : '';
+            $candidatePusId = isset($parcelshop['pusId']) ? (string) $parcelshop['pusId'] : '';
+
+            if ($parcelshopId !== '' && $candidateId === $parcelshopId) {
+                return $parcelshop;
+            }
+
+            if ($parcelshopPusId !== '' && $candidatePusId === $parcelshopPusId) {
+                return $parcelshop;
+            }
+        }
+
+        return null;
+    }
+
+    private static function enrichParcelshopCapabilities(array $chosenParcelshopData): array
+    {
+        $hasCapabilityData =
+            ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY] ?? '') !== '' ||
+            ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY] ?? '') !== '' ||
+            ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY] ?? '') !== '';
+
+        if ($hasCapabilityData) {
+            return $chosenParcelshopData;
+        }
+
+        $city = (string) ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY] ?? '');
+        $zip = (string) ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY] ?? '');
+        $country = (string) ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY] ?? '');
+
+        if ($city === '' || $zip === '' || $country === '') {
+            return $chosenParcelshopData;
+        }
+
+        try {
+            $parcelshops = (new Client())->searchParcelShop($city, $zip, $country);
+        } catch (\Throwable $exception) {
+            return $chosenParcelshopData;
+        }
+
+        $matchedParcelshop = self::findMatchingParcelshop($parcelshops, $chosenParcelshopData);
+        if ($matchedParcelshop === null) {
+            return $chosenParcelshopData;
+        }
+
+        if (($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY] ?? '') === '') {
+            $maxWeight = self::extractParcelshopProperty($matchedParcelshop, 'max_weight');
+            if ($maxWeight !== null && $maxWeight !== '') {
+                $chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY] = sanitize_text_field((string) $maxWeight);
+            }
+        }
+
+        if (($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY] ?? '') === '') {
+            $codSupport = self::extractParcelshopProperty($matchedParcelshop, 'allow_pickup_cod');
+            if ($codSupport === null) {
+                $codSupport = self::parcelshopHasService($matchedParcelshop, 'dropoff:cod');
+            }
+
+            $normalizedCodSupport = self::normalizeBooleanString($codSupport);
+            if ($normalizedCodSupport !== '') {
+                $chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY] = $normalizedCodSupport;
+            }
+        }
+
+        if (($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY] ?? '') === '') {
+            $cardSupport = self::extractParcelshopProperty($matchedParcelshop, 'pos_terminal');
+            if ($cardSupport === null) {
+                $cardSupport = self::parcelshopHasService($matchedParcelshop, 'cardPayment');
+            }
+
+            $normalizedCardSupport = self::normalizeBooleanString($cardSupport);
+            if ($normalizedCardSupport !== '') {
+                $chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY] = $normalizedCardSupport;
+            }
+        }
+
+        return $chosenParcelshopData;
+    }
+
     /**
      * Parcelshop search ajax action
      *
@@ -148,6 +308,8 @@ class Ajax
             DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY => $parcelshop_is_slovenska_posta_eligible,
             DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY => $parcelshop_is_zbox_eligible,
         ];
+
+        $chosen_parcelshop_data = self::enrichParcelshopCapabilities($chosen_parcelshop_data);
 
         WC()->session->set(Shipping::SESSION_CHOSEN_PARCELSHOP_KEY, $chosen_parcelshop_data);
 

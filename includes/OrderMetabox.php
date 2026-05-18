@@ -14,6 +14,7 @@ class OrderMetabox
     public const EXPORT_ACTION_KEY = 'dpd_export';
     public const RESET_ACTION_KEY = 'dpd_reset';
     public const IMPORT_STATUSDATA_ACTION_KEY = 'dpd_import_statusdata';
+    public const REPAIR_PARCELSHOP_COD_ACTION_KEY = 'dpd_repair_parcelshop_cod';
 
     public static function init()
     {
@@ -104,6 +105,27 @@ class OrderMetabox
                 exit;
             }
         }
+
+        if (isset($_POST[self::REPAIR_PARCELSHOP_COD_ACTION_KEY]) && isset($_POST['dpd_metabox_nonce'])) {
+            if (!wp_verify_nonce($_POST['dpd_metabox_nonce'], 'dpd_metabox_save')) {
+                return;
+            }
+
+            if (isset($_POST['order_id']) && !empty($_POST['order_id'])) {
+                $order_id = absint($_POST['order_id']);
+                $result = Order::repairParcelshopCapabilityMeta($order_id, true);
+
+                if (!empty($result['updated'])) {
+                    Notice::success((string) ($result['message'] ?? __('Parcelshop capability metadata was refreshed from DPD API.', 'ar-design-dpd')));
+                } else {
+                    Notice::add((string) ($result['message'] ?? __('Parcelshop capability metadata did not require any change.', 'ar-design-dpd')), 'warning');
+                }
+
+                $order_edit_url = admin_url('post.php?post=' . $order_id . '&action=edit');
+                wp_safe_redirect($order_edit_url);
+                exit;
+            }
+        }
     }
     
     /**
@@ -164,6 +186,10 @@ class OrderMetabox
     public static function renderMetabox(mixed $post_or_order_object): void
     {
         $order = ($post_or_order_object instanceof \WP_Post) ? wc_get_order($post_or_order_object->ID) : $post_or_order_object;
+        if (!$order instanceof \WC_Order) {
+            return;
+        }
+
         $order_id = $order->get_id();
 
         if (!$order_id) {
@@ -178,6 +204,7 @@ class OrderMetabox
             ? (string) $default_settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY]
             : '';
         $dpd_export_result = $order->get_meta(Order::EXPORT_STATUS_META_KEY, true);
+        $show_parcelshop_repair = self::shouldShowParcelshopCodRepairAction($order);
 
         if ($dpd_export_result == Order::EXPORT_SUCCESS_STATUS) {
             $dpd_label_url = $order->get_meta(Order::EXPORT_LABEL_URL_META_KEY, true);
@@ -212,6 +239,11 @@ class OrderMetabox
             echo '<form method="post">';
             wp_nonce_field('dpd_metabox_save', 'dpd_metabox_nonce');
             echo '<input type="hidden" name="order_id" value="' . esc_attr($order_id) . '">';
+
+            if ($show_parcelshop_repair) {
+                echo '<p><input type="submit" class="button" value="' . esc_attr__('Repair ParcelShop COD data', 'ar-design-dpd') . '" name="' . esc_attr(self::REPAIR_PARCELSHOP_COD_ACTION_KEY) . '"></p>';
+            }
+
             echo '<input type="submit" class="button" value="' . __('Reset', 'ar-design-dpd') . '" name="' . esc_attr(self::RESET_ACTION_KEY) . '">';
             echo '</form>';
 
@@ -345,6 +377,12 @@ class OrderMetabox
 				<input type="submit" class="button" value="<?php _e('Export to DPD', 'ar-design-dpd'); ?>" name="<?php echo esc_attr(self::EXPORT_ACTION_KEY); ?>">
 			</p>
 
+            <?php if ($show_parcelshop_repair) : ?>
+                <p>
+                    <input type="submit" class="button" value="<?php esc_attr_e('Repair ParcelShop COD data', 'ar-design-dpd'); ?>" name="<?php echo esc_attr(self::REPAIR_PARCELSHOP_COD_ACTION_KEY); ?>">
+                </p>
+            <?php endif; ?>
+
             <?php if ($statusdata_configured) : ?>
                 <p>
                     <input type="submit" class="button" value="<?php esc_attr_e('Import STATUSDATA now', 'ar-design-dpd'); ?>" name="<?php echo esc_attr(self::IMPORT_STATUSDATA_ACTION_KEY); ?>">
@@ -352,5 +390,14 @@ class OrderMetabox
             <?php endif; ?>
         </form>
 		<?php
+    }
+
+    private static function shouldShowParcelshopCodRepairAction(\WC_Order $order): bool
+    {
+        if (!Order::hasParcelShpping($order)) {
+            return false;
+        }
+
+        return $order->get_payment_method() === 'cod';
     }
 }

@@ -42,8 +42,11 @@ class Blocks
      */
     public static function validateParcelShopBeforePayment($context, $result)
     {
-        if (isset($context->order)) {
-            self::validateParcelShopSelection($context->order);
+        $context_data = is_object($context) ? (array) $context : [];
+        $order = $context_data['order'] ?? null;
+
+        if ($order instanceof \WC_Order) {
+            self::validateParcelShopSelection($order);
         }
     }
 
@@ -86,6 +89,11 @@ class Blocks
                         if (empty($chosen_parcelshop_data[$field])) {
                             throw new \Exception($error_message);
                         }
+                    }
+
+                    $payment_support_error = \ArDesign\DPD\Shipping::getParcelshopPaymentSupportError((array) $chosen_parcelshop_data);
+                    if ($payment_support_error !== '') {
+                        throw new \Exception($payment_support_error);
                     }
                 }
 

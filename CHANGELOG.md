@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.6.5 - 2026-05-18
+- Persisted DPD ParcelShop COD and card capability metadata from checkout/session data so new COD parcelshop orders no longer export stale empty capability flags.
+- Added a ParcelShop capability backfill path for existing COD orders, including an admin order-detail repair button and a CLI helper for manual repair.
+
 ## 8.6.4 - 2026-05-18
 - Switched the DPD shipper export endpoint back to `https://api.dpd.sk/shipment/json` after production verification against the original `wc-dpd` plugin.
 - Fixed the documented shipper export endpoint in maintainer and developer docs to match the working API target.

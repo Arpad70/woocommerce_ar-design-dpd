@@ -111,6 +111,47 @@ class Shipping
         ) {
             wc_add_notice(__("You have to choose a parcelshop.", "ar-design-dpd"), 'error');
         }
+
+        $parcelshop_data = WC()->session ? WC()->session->get(self::SESSION_CHOSEN_PARCELSHOP_KEY, []) : [];
+        if (!is_array($parcelshop_data)) {
+            $parcelshop_data = [];
+        }
+
+        $request_flags = [
+            DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY,
+            DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY,
+        ];
+
+        foreach ($request_flags as $request_flag) {
+            if (isset($_POST[$request_flag]) && $_POST[$request_flag] !== '') {
+                $parcelshop_data[$request_flag] = wp_unslash($_POST[$request_flag]);
+            }
+        }
+
+        $payment_support_error = self::getParcelshopPaymentSupportError($parcelshop_data);
+        if ($payment_support_error !== '') {
+            wc_add_notice($payment_support_error, 'error');
+        }
+    }
+
+    public static function getParcelshopPaymentSupportError(array $parcelshopData = []): string
+    {
+        $parcelshop_cod_allowed = isset($parcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY])
+            ? (string) $parcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY]
+            : '';
+        $parcelshop_card_allowed = isset($parcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY])
+            ? (string) $parcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY]
+            : '';
+
+        if (self::isPaymentMethodRequired('cod') && $parcelshop_cod_allowed !== '' && !filter_var($parcelshop_cod_allowed, FILTER_VALIDATE_BOOL)) {
+            return __('Selected DPD Pickup / Pickup Station does not support dobírka (COD). Change the payment method or choose another pickup point.', 'ar-design-dpd');
+        }
+
+        if (self::isPaymentMethodRequired('card') && $parcelshop_card_allowed !== '' && !filter_var($parcelshop_card_allowed, FILTER_VALIDATE_BOOL)) {
+            return __('Selected DPD Pickup / Pickup Station does not support card payment. Change the payment method or choose another pickup point.', 'ar-design-dpd');
+        }
+
+        return '';
     }
 
     /**
