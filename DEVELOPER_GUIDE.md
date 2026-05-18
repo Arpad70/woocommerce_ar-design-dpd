@@ -6,7 +6,7 @@ Technický přehled pluginu `AR Design DPD for WooCommerce` pro další vývojá
 
 Plugin je dnes postavený na těchto aktivních tocích:
 
-- **export zásilek:** DPD SK shipper JSON-RPC API přes `https://capi.dpd.sk/shipment/json`
+- **export zásilek:** DPD SK shipper JSON-RPC API přes `https://api.dpd.sk/shipment/json`
 - **tracking zásilek:** import `STATUSDATA` souborů z lokálního adresáře, volitelně stažených ze SFTP
 - **parcelshop lookup:** nadále používá starší endpoint `https://api.dpd.sk/parcelshop/json`
 

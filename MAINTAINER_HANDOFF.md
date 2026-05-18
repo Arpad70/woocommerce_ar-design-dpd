@@ -77,7 +77,7 @@ Typické symptomy:
 Co zkontrolovat:
 
 1. jsou správně vyplněné `DELIS ID`, email a API key
-2. je dostupný endpoint `https://capi.dpd.sk/shipment/json`
+2. je dostupný endpoint `https://api.dpd.sk/shipment/json`
 3. odpovídá zvolený DPD produkt očekávanému typu zásilky
 4. nejsou rozbité adresní nebo parcel data v payloadu
 5. nebyla omylem zavedena změna, která obchází `Client::exportViaShipper()`

@@ -15,7 +15,7 @@ class Client
     public const RESPONSE_ERROR_STATUS = 'error';
     public const RESPONSE_WARNING_MESSAGE_KEY = 'warning_message';
     private const LEGACY_URL = 'https://api.dpd.sk/';
-    private const SHIPPER_URL = 'https://capi.dpd.sk/shipment/json';
+    private const SHIPPER_URL = 'https://api.dpd.sk/shipment/json';
 
     /**
      * @var string

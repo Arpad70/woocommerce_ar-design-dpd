@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.6.4 - 2026-05-18
+- Switched the DPD shipper export endpoint back to `https://api.dpd.sk/shipment/json` after production verification against the original `wc-dpd` plugin.
+- Fixed the documented shipper export endpoint in maintainer and developer docs to match the working API target.
+
 ## 8.6.3 - 2026-05-15
 - Added energy surcharge settings, monitoring helpers and shipment surcharge handling.
 - Published follow-up release to align local shipping changes with the GitHub release state.
