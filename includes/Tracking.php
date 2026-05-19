@@ -167,6 +167,7 @@ class Tracking
             'remote_files_downloaded' => 0,
             'remote_files_skipped' => 0,
             'remote_files_archived' => 0,
+            'messages' => [],
         ];
 
         if (self::isStatusDataSftpConfigured($settings)) {
@@ -175,12 +176,15 @@ class Tracking
             foreach (['remote_files_found', 'remote_files_downloaded', 'remote_files_skipped', 'remote_files_archived', 'errors'] as $key) {
                 $summary[$key] += (int) ($downloadSummary[$key] ?? 0);
             }
+
+            $summary['messages'] = array_merge($summary['messages'], (array) ($downloadSummary['messages'] ?? []));
         }
 
         if ($directory === '' || !is_dir($directory) || !is_readable($directory)) {
             ard_dpd_log('STATUSDATA directory is not readable', $directory);
 
             $summary['errors']++;
+            $summary['messages'][] = __('STATUSDATA directory is not configured or not readable.', 'ar-design-dpd');
 
             return $summary;
         }
@@ -188,6 +192,8 @@ class Tracking
         $files = self::getStatusDataFiles($directory);
         $summary['files_found'] = count($files);
         if ($files === []) {
+            $summary['messages'][] = __('No local STATUSDATA files were found in the configured directory.', 'ar-design-dpd');
+
             return $summary;
         }
 
@@ -209,6 +215,12 @@ class Tracking
                     'message' => $exception->getMessage(),
                 ]);
                 $summary['errors']++;
+                $summary['messages'][] = sprintf(
+                    /* translators: 1: STATUSDATA filename, 2: error message */
+                    __('Import of file %1$s failed: %2$s', 'ar-design-dpd'),
+                    basename($filePath),
+                    $exception->getMessage()
+                );
             }
         }
 
@@ -223,11 +235,13 @@ class Tracking
             'remote_files_skipped' => 0,
             'remote_files_archived' => 0,
             'errors' => 0,
+            'messages' => [],
         ];
 
         if (!function_exists('ssh2_connect') || !function_exists('ssh2_auth_password') || !function_exists('ssh2_sftp')) {
             ard_dpd_log('STATUSDATA SFTP download skipped because ssh2 extension is not available');
             $summary['errors']++;
+            $summary['messages'][] = __('STATUSDATA SFTP download is configured, but the PHP ssh2 extension is not available on this server.', 'ar-design-dpd');
 
             return $summary;
         }
@@ -235,6 +249,7 @@ class Tracking
         if ($localDirectory === '') {
             ard_dpd_log('STATUSDATA SFTP download skipped because local directory is empty');
             $summary['errors']++;
+            $summary['messages'][] = __('STATUSDATA SFTP download could not start because the local STATUSDATA directory is empty.', 'ar-design-dpd');
 
             return $summary;
         }
@@ -242,6 +257,7 @@ class Tracking
         if (!is_dir($localDirectory) && !wp_mkdir_p($localDirectory)) {
             ard_dpd_log('STATUSDATA SFTP download failed because local directory could not be created', $localDirectory);
             $summary['errors']++;
+            $summary['messages'][] = __('The local STATUSDATA directory could not be created before SFTP download.', 'ar-design-dpd');
 
             return $summary;
         }
@@ -249,6 +265,7 @@ class Tracking
         if (!is_dir($localDirectory) || !is_writable($localDirectory)) {
             ard_dpd_log('STATUSDATA SFTP download failed because local directory is not writable', $localDirectory);
             $summary['errors']++;
+            $summary['messages'][] = __('The local STATUSDATA directory is not writable, so downloaded SFTP files cannot be stored.', 'ar-design-dpd');
 
             return $summary;
         }
@@ -264,6 +281,12 @@ class Tracking
         if (!$connection) {
             ard_dpd_log('STATUSDATA SFTP connection failed', ['host' => $host, 'port' => $port]);
             $summary['errors']++;
+            $summary['messages'][] = sprintf(
+                /* translators: 1: SFTP host, 2: SFTP port */
+                __('Could not connect to STATUSDATA SFTP %1$s:%2$d.', 'ar-design-dpd'),
+                $host,
+                $port > 0 ? $port : 22
+            );
 
             return $summary;
         }
@@ -271,6 +294,7 @@ class Tracking
         if (!@\ssh2_auth_password($connection, $username, $password)) {
             ard_dpd_log('STATUSDATA SFTP authentication failed', ['host' => $host, 'username' => $username]);
             $summary['errors']++;
+            $summary['messages'][] = __('STATUSDATA SFTP authentication failed. Check username and password.', 'ar-design-dpd');
 
             return $summary;
         }
@@ -279,12 +303,17 @@ class Tracking
         if (!$sftp) {
             ard_dpd_log('STATUSDATA SFTP subsystem could not be initialized', ['host' => $host]);
             $summary['errors']++;
+            $summary['messages'][] = __('STATUSDATA SFTP subsystem could not be initialized after login.', 'ar-design-dpd');
 
             return $summary;
         }
 
         $remoteFiles = self::listRemoteStatusDataFiles($sftp, $remoteDirectory);
         $summary['remote_files_found'] = count($remoteFiles);
+
+        if ($remoteFiles === []) {
+            $summary['messages'][] = __('No STATUSDATA files were found in the configured remote SFTP directory.', 'ar-design-dpd');
+        }
 
         foreach ($remoteFiles as $remoteFile) {
             $downloadResult = self::downloadRemoteStatusDataFile($connection, $sftp, $remoteFile, $localDirectory, $archiveDirectory);

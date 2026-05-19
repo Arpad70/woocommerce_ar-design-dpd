@@ -24,13 +24,7 @@ class Notice
      */
     public static function initSession()
     {
-        if (!session_id()) {
-            session_start();
-        }
-
-        if (function_exists('session_status') && session_status() != constant('PHP_SESSION_ACTIVE') || session_id() != '') {
-            @session_write_close();
-        }
+        self::ensureSessionStarted();
     }
 
     /**
@@ -40,6 +34,8 @@ class Notice
      */
     public static function displayNotices()
     {
+        self::ensureSessionStarted();
+
         $notices = isset($_SESSION['notices']) && !empty($_SESSION['notices']) ? (array) wp_kses_post_deep($_SESSION['notices']) : [];
 
         foreach ($notices as $notice) {
@@ -54,6 +50,10 @@ class Notice
         // Unset already flashed notices
         if (!empty($notices)) {
             unset($_SESSION['notices']);
+        }
+
+        if (function_exists('session_write_close') && self::isSessionActive()) {
+            @session_write_close();
         }
     }
 
@@ -92,6 +92,8 @@ class Notice
      */
     public static function add($notice = "", $type = "warning", $dismissible = true)
     {
+        self::ensureSessionStarted();
+
         $notices = isset($_SESSION['notices']) && !empty($_SESSION['notices']) ? (array) wp_kses_post_deep($_SESSION['notices']) : [];
         $dismissible_text = ($dismissible) ? "is-dismissible" : "";
 
@@ -107,5 +109,31 @@ class Notice
         );
 
         $_SESSION['notices'] = $notices;
+
+        if (function_exists('session_write_close') && self::isSessionActive()) {
+            @session_write_close();
+        }
+    }
+
+    private static function ensureSessionStarted(): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+
+        if (self::isSessionActive()) {
+            return;
+        }
+
+        @session_start();
+    }
+
+    private static function isSessionActive(): bool
+    {
+        if (function_exists('session_status')) {
+            return session_status() === PHP_SESSION_ACTIVE;
+        }
+
+        return session_id() !== '';
     }
 }

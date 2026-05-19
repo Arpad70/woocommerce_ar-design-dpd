@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.6.8 - 2026-05-19
+- Restored admin STATUSDATA feedback notices so manual imports now report success, warnings and errors again after redirect.
+- Added clearer STATUSDATA diagnostics in the DPD order metabox, including local directory checks, file counts and SFTP readiness hints.
+- Hardened STATUSDATA logging when WooCommerce log storage is not writable and excluded runtime `public/data` files from git/release artifacts.
+
 ## 8.6.7 - 2026-05-19
 - Fixed the manual `Import STATUSDATA now` action in the DPD order metabox by routing it through a dedicated admin endpoint instead of a brittle nested form submit.
 - Added safer post-import redirects for both classic WooCommerce order edit screens and HPOS order screens.

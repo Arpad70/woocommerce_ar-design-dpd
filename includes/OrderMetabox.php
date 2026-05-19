@@ -202,6 +202,7 @@ class OrderMetabox
         $statusdata_directory = isset($default_settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY])
             ? (string) $default_settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY]
             : '';
+        $statusdata_diagnostics = self::getStatusDataDiagnostics($default_settings);
         $dpd_export_result = $order->get_meta(Order::EXPORT_STATUS_META_KEY, true);
         $show_parcelshop_repair = self::shouldShowParcelshopCodRepairAction($order);
 
@@ -225,6 +226,7 @@ class OrderMetabox
                     __('STATUSDATA directory: %s', 'ar-design-dpd'),
                     $statusdata_directory
                 )) . '</small></p>';
+                echo self::renderStatusDataDiagnostics($statusdata_diagnostics);
                 if ($statusdata_sftp_configured) {
                     echo '<p><small>' . esc_html__('SFTP download is configured and will run before import.', 'ar-design-dpd') . '</small></p>';
                 }
@@ -295,6 +297,7 @@ class OrderMetabox
                             <br><?php esc_html_e('SFTP source is configured and will be synchronized before local import.', 'ar-design-dpd'); ?>
                         <?php endif; ?>
                     </p>
+                    <?php echo wp_kses_post(self::renderStatusDataDiagnostics($statusdata_diagnostics)); ?>
                 </div>
             <?php endif; ?>
             
@@ -401,7 +404,7 @@ class OrderMetabox
         }
 
         $summary = Tracking::importStatusDataDirectory($directory);
-        Notice::success(sprintf(
+        $summaryMessage = sprintf(
             /* translators: 1: remote files downloaded, 2: remote files skipped, 3: local files processed, 4: local files skipped, 5: orders updated, 6: unmatched parcels, 7: errors. */
             __('STATUSDATA sync finished. Remote downloaded: %1$d, remote skipped: %2$d, files processed: %3$d, local skipped: %4$d, orders updated: %5$d, unmatched parcels: %6$d, errors: %7$d.', 'ar-design-dpd'),
             (int) ($summary['remote_files_downloaded'] ?? 0),
@@ -411,7 +414,28 @@ class OrderMetabox
             (int) ($summary['orders_updated'] ?? 0),
             (int) ($summary['parcels_unmatched'] ?? 0),
             (int) ($summary['errors'] ?? 0)
-        ));
+        );
+
+        $details = array_values(array_filter(array_map('trim', (array) ($summary['messages'] ?? []))));
+        $combinedMessage = $summaryMessage;
+
+        if ($details !== []) {
+            $combinedMessage .= ' ' . implode(' ', array_map('wp_strip_all_tags', $details));
+        }
+
+        if ((int) ($summary['errors'] ?? 0) > 0) {
+            Notice::error($combinedMessage);
+
+            return;
+        }
+
+        if ((int) ($summary['files_found'] ?? 0) === 0 && (int) ($summary['remote_files_downloaded'] ?? 0) === 0) {
+            Notice::add($combinedMessage, 'warning');
+
+            return;
+        }
+
+        Notice::success($combinedMessage);
     }
 
     private static function getManualStatusDataImportUrl(int $order_id): string
@@ -446,5 +470,85 @@ class OrderMetabox
         }
 
         return $order->get_payment_method() === 'cod';
+    }
+
+    /**
+     * @param array<string, mixed> $settings
+     * @return array<string, mixed>
+     */
+    private static function getStatusDataDiagnostics(array $settings): array
+    {
+        $directory = isset($settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY])
+            ? trim((string) $settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY])
+            : '';
+        $localFiles = [];
+
+        if ($directory !== '' && is_dir($directory) && is_readable($directory)) {
+            $localFiles = glob(untrailingslashit($directory) . DIRECTORY_SEPARATOR . '*');
+            $localFiles = is_array($localFiles)
+                ? array_values(array_filter($localFiles, static fn ($filePath) => is_string($filePath) && is_file($filePath)))
+                : [];
+        }
+
+        return [
+            'directory' => $directory,
+            'is_dir' => $directory !== '' && is_dir($directory),
+            'is_readable' => $directory !== '' && is_readable($directory),
+            'is_writable' => $directory !== '' && is_writable($directory),
+            'local_file_count' => count($localFiles),
+            'sftp_configured' => Tracking::isStatusDataSftpConfigured($settings),
+            'ssh2_available' => function_exists('ssh2_connect') && function_exists('ssh2_auth_password') && function_exists('ssh2_sftp'),
+            'sftp_host' => isset($settings[DpdExportSettings::STATUSDATA_SFTP_HOST_OPTION_KEY]) ? (string) $settings[DpdExportSettings::STATUSDATA_SFTP_HOST_OPTION_KEY] : '',
+            'sftp_remote_directory' => isset($settings[DpdExportSettings::STATUSDATA_SFTP_REMOTE_DIRECTORY_OPTION_KEY]) ? (string) $settings[DpdExportSettings::STATUSDATA_SFTP_REMOTE_DIRECTORY_OPTION_KEY] : '',
+            'sftp_archive_directory' => isset($settings[DpdExportSettings::STATUSDATA_SFTP_ARCHIVE_DIRECTORY_OPTION_KEY]) ? (string) $settings[DpdExportSettings::STATUSDATA_SFTP_ARCHIVE_DIRECTORY_OPTION_KEY] : '',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $diagnostics
+     */
+    private static function renderStatusDataDiagnostics(array $diagnostics): string
+    {
+        $lines = [];
+
+        $lines[] = sprintf(
+            /* translators: 1: directory exists status, 2: readability status, 3: writability status, 4: file count */
+            __('Directory check: exists %1$s, readable %2$s, writable %3$s. Local files: %4$d.', 'ar-design-dpd'),
+            !empty($diagnostics['is_dir']) ? __('yes', 'ar-design-dpd') : __('no', 'ar-design-dpd'),
+            !empty($diagnostics['is_readable']) ? __('yes', 'ar-design-dpd') : __('no', 'ar-design-dpd'),
+            !empty($diagnostics['is_writable']) ? __('yes', 'ar-design-dpd') : __('no', 'ar-design-dpd'),
+            (int) ($diagnostics['local_file_count'] ?? 0)
+        );
+
+        if (!empty($diagnostics['sftp_configured'])) {
+            $lines[] = sprintf(
+                /* translators: 1: SFTP host, 2: remote directory */
+                __('SFTP source: %1$s / %2$s.', 'ar-design-dpd'),
+                (string) ($diagnostics['sftp_host'] ?? ''),
+                (string) ($diagnostics['sftp_remote_directory'] ?? '')
+            );
+
+            if (!empty($diagnostics['sftp_archive_directory'])) {
+                $lines[] = sprintf(
+                    /* translators: %s: remote archive directory */
+                    __('Remote archive directory: %s.', 'ar-design-dpd'),
+                    (string) $diagnostics['sftp_archive_directory']
+                );
+            }
+
+            if (empty($diagnostics['ssh2_available'])) {
+                $lines[] = __('SFTP download is currently blocked because the PHP ssh2 extension is missing on this server.', 'ar-design-dpd');
+            }
+        }
+
+        if ($lines === []) {
+            return '';
+        }
+
+        $html = '<p><small>';
+        $html .= implode('<br>', array_map('esc_html', $lines));
+        $html .= '</small></p>';
+
+        return $html;
     }
 }

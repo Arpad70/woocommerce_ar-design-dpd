@@ -4,3 +4,5 @@
 build
 .github
 *.zip
+public/data/*
+!public/data/.gitkeep

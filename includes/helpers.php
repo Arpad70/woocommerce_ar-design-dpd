@@ -22,6 +22,11 @@ function ard_dpd_log($message, $variable = null)
 
     $log_handler = new \WC_Log_Handler_File();
     $file = $log_handler->get_log_file_path('ar_design_dpd');
+    $log_directory = dirname($file);
+
+    if (!is_dir($log_directory) || !is_writable($log_directory)) {
+        return;
+    }
 
     $date = get_date_from_gmt(gmdate('Y-m-d H:i:s'), 'Y-m-d H:i:s O');
 
@@ -32,7 +37,7 @@ function ard_dpd_log($message, $variable = null)
     // implementation note:
     // we do not use WooCommerce log handler intentionally, because it does not
     // use file locking, thus there is possibility that log gets damaged
-    file_put_contents($file, "[$date] $message\n", LOCK_EX | FILE_APPEND);
+    @file_put_contents($file, "[$date] $message\n", LOCK_EX | FILE_APPEND);
 }
 
 /**
