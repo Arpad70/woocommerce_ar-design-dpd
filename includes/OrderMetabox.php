@@ -15,6 +15,8 @@ class OrderMetabox
     public const RESET_ACTION_KEY = 'dpd_reset';
     public const IMPORT_STATUSDATA_ACTION_KEY = 'dpd_import_statusdata';
     public const REPAIR_PARCELSHOP_COD_ACTION_KEY = 'dpd_repair_parcelshop_cod';
+    private const MANUAL_STATUSDATA_IMPORT_ACTION = 'ard_dpd_import_statusdata_now';
+    private const MANUAL_STATUSDATA_IMPORT_NONCE = 'ard_dpd_import_statusdata_now_nonce';
 
     public static function init()
     {
@@ -22,6 +24,25 @@ class OrderMetabox
         
         // Handle form submission via dedicated admin action
         add_action('admin_init', [__CLASS__, 'handleFormSubmission']);
+        add_action('admin_post_' . self::MANUAL_STATUSDATA_IMPORT_ACTION, [__CLASS__, 'handleManualStatusDataImportRequest']);
+    }
+
+    public static function handleManualStatusDataImportRequest(): void
+    {
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(esc_html__('Nedostatočné oprávnenie.', 'ar-design-dpd'));
+        }
+
+        check_admin_referer(self::MANUAL_STATUSDATA_IMPORT_ACTION, self::MANUAL_STATUSDATA_IMPORT_NONCE);
+
+        $order_id = isset($_GET['order_id']) ? absint($_GET['order_id']) : 0;
+
+        if ($order_id > 0) {
+            self::runStatusDataImport($order_id);
+        }
+
+        wp_safe_redirect(self::getOrderEditUrl($order_id));
+        exit;
     }
 
     public static function addMetabox()
@@ -78,30 +99,8 @@ class OrderMetabox
 
             if (isset($_POST['order_id']) && !empty($_POST['order_id'])) {
                 $order_id = absint($_POST['order_id']);
-                $settings = DpdExportSettings::getDefaultSettings();
-                $directory = isset($settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY])
-                    ? (string) $settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY]
-                    : '';
-
-                if (!Tracking::isStatusDataConfigured($settings)) {
-                    Notice::error(__('STATUSDATA directory is not configured or not readable.', 'ar-design-dpd'));
-                } else {
-                    $summary = Tracking::importStatusDataDirectory($directory);
-                    Notice::success(sprintf(
-                        /* translators: 1: remote files downloaded, 2: remote files skipped, 3: local files processed, 4: local files skipped, 5: orders updated, 6: unmatched parcels, 7: errors. */
-                        __('STATUSDATA sync finished. Remote downloaded: %1$d, remote skipped: %2$d, files processed: %3$d, local skipped: %4$d, orders updated: %5$d, unmatched parcels: %6$d, errors: %7$d.', 'ar-design-dpd'),
-                        (int) ($summary['remote_files_downloaded'] ?? 0),
-                        (int) ($summary['remote_files_skipped'] ?? 0),
-                        (int) ($summary['files_processed'] ?? 0),
-                        (int) ($summary['files_skipped'] ?? 0),
-                        (int) ($summary['orders_updated'] ?? 0),
-                        (int) ($summary['parcels_unmatched'] ?? 0),
-                        (int) ($summary['errors'] ?? 0)
-                    ));
-                }
-
-                $order_edit_url = admin_url('post.php?post=' . $order_id . '&action=edit');
-                wp_safe_redirect($order_edit_url);
+                self::runStatusDataImport($order_id);
+                wp_safe_redirect(self::getOrderEditUrl($order_id));
                 exit;
             }
         }
@@ -229,11 +228,7 @@ class OrderMetabox
                 if ($statusdata_sftp_configured) {
                     echo '<p><small>' . esc_html__('SFTP download is configured and will run before import.', 'ar-design-dpd') . '</small></p>';
                 }
-                echo '<form method="post" style="margin-bottom:8px;">';
-                wp_nonce_field('dpd_metabox_save', 'dpd_metabox_nonce');
-                echo '<input type="hidden" name="order_id" value="' . esc_attr($order_id) . '">';
-                echo '<input type="submit" class="button" value="' . esc_attr__('Import STATUSDATA now', 'ar-design-dpd') . '" name="' . esc_attr(self::IMPORT_STATUSDATA_ACTION_KEY) . '">';
-                echo '</form>';
+                echo '<p><a class="button" href="' . esc_url(self::getManualStatusDataImportUrl($order_id)) . '">' . esc_html__('Import STATUSDATA now', 'ar-design-dpd') . '</a></p>';
             }
 
             echo '<form method="post">';
@@ -385,11 +380,63 @@ class OrderMetabox
 
             <?php if ($statusdata_configured) : ?>
                 <p>
-                    <input type="submit" class="button" value="<?php esc_attr_e('Import STATUSDATA now', 'ar-design-dpd'); ?>" name="<?php echo esc_attr(self::IMPORT_STATUSDATA_ACTION_KEY); ?>">
+                    <a class="button" href="<?php echo esc_url(self::getManualStatusDataImportUrl($order_id)); ?>"><?php esc_html_e('Import STATUSDATA now', 'ar-design-dpd'); ?></a>
                 </p>
             <?php endif; ?>
         </form>
 		<?php
+    }
+
+    private static function runStatusDataImport(int $order_id): void
+    {
+        $settings = DpdExportSettings::getDefaultSettings();
+        $directory = isset($settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY])
+            ? (string) $settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY]
+            : '';
+
+        if (!Tracking::isStatusDataConfigured($settings)) {
+            Notice::error(__('STATUSDATA directory is not configured or not readable.', 'ar-design-dpd'));
+
+            return;
+        }
+
+        $summary = Tracking::importStatusDataDirectory($directory);
+        Notice::success(sprintf(
+            /* translators: 1: remote files downloaded, 2: remote files skipped, 3: local files processed, 4: local files skipped, 5: orders updated, 6: unmatched parcels, 7: errors. */
+            __('STATUSDATA sync finished. Remote downloaded: %1$d, remote skipped: %2$d, files processed: %3$d, local skipped: %4$d, orders updated: %5$d, unmatched parcels: %6$d, errors: %7$d.', 'ar-design-dpd'),
+            (int) ($summary['remote_files_downloaded'] ?? 0),
+            (int) ($summary['remote_files_skipped'] ?? 0),
+            (int) ($summary['files_processed'] ?? 0),
+            (int) ($summary['files_skipped'] ?? 0),
+            (int) ($summary['orders_updated'] ?? 0),
+            (int) ($summary['parcels_unmatched'] ?? 0),
+            (int) ($summary['errors'] ?? 0)
+        ));
+    }
+
+    private static function getManualStatusDataImportUrl(int $order_id): string
+    {
+        return wp_nonce_url(
+            add_query_arg([
+                'action' => self::MANUAL_STATUSDATA_IMPORT_ACTION,
+                'order_id' => $order_id,
+            ], admin_url('admin-post.php')),
+            self::MANUAL_STATUSDATA_IMPORT_ACTION,
+            self::MANUAL_STATUSDATA_IMPORT_NONCE
+        );
+    }
+
+    private static function getOrderEditUrl(int $order_id): string
+    {
+        if (
+            $order_id > 0
+            && class_exists(CustomOrdersTableController::class)
+            && wc_get_container()->get(CustomOrdersTableController::class)->custom_orders_table_usage_is_enabled()
+        ) {
+            return admin_url('admin.php?page=wc-orders&action=edit&id=' . $order_id);
+        }
+
+        return admin_url('post.php?post=' . $order_id . '&action=edit');
     }
 
     private static function shouldShowParcelshopCodRepairAction(\WC_Order $order): bool

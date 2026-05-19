@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.6.7 - 2026-05-19
+- Fixed the manual `Import STATUSDATA now` action in the DPD order metabox by routing it through a dedicated admin endpoint instead of a brittle nested form submit.
+- Added safer post-import redirects for both classic WooCommerce order edit screens and HPOS order screens.
+
 ## 8.6.6 - 2026-05-18
 - Promoted the DPD standalone release to supersede `8.6.5` with the same ParcelShop COD metadata and repair improvements.
 
