@@ -184,8 +184,8 @@ window.dpdParcelShopWidget = (function () {
 			return;
 		}
 
-		var parcelShopId = data.hasOwnProperty('id') ? data.id : null;
-		var parcelShopPusId = data.hasOwnProperty('id') ? data.id : null;
+		var parcelShopId = resolveParcelShopId(data);
+		var parcelShopPusId = resolveParcelShopPusId(data, parcelShopId);
 		var parcelShopName = data.hasOwnProperty('name') ? data.name : null;
 		var parcelShopStreet = data.hasOwnProperty('street') ? data.street : null;
 		var parcelShopZip = data.hasOwnProperty('zip') ? data.zip : null;
@@ -264,6 +264,36 @@ window.dpdParcelShopWidget = (function () {
 		document
 			.querySelector(chosenParcelShopContentSelector)
 			.classList.add('active');
+	}
+
+	function resolveParcelShopId(data) {
+		var candidateKeys = ['parcelShopId', 'pudoId', 'id', 'locationId'];
+
+		for (var i = 0; i < candidateKeys.length; i++) {
+			var candidateKey = candidateKeys[i];
+			if (!data.hasOwnProperty(candidateKey) || data[candidateKey] === null || data[candidateKey] === '') {
+				continue;
+			}
+
+			return data[candidateKey];
+		}
+
+		return null;
+	}
+
+	function resolveParcelShopPusId(data, parcelShopId) {
+		var candidateKeys = ['pusId', 'publicId', 'parcelShopPusId'];
+
+		for (var i = 0; i < candidateKeys.length; i++) {
+			var candidateKey = candidateKeys[i];
+			if (!data.hasOwnProperty(candidateKey) || data[candidateKey] === null || data[candidateKey] === '') {
+				continue;
+			}
+
+			return data[candidateKey];
+		}
+
+		return parcelShopId;
 	}
 
 	function setSelectedParcelShopSession(
@@ -509,6 +539,9 @@ window.dpdParcelShopWidget = (function () {
 				.then(function (pudo) {
 					setSelectedParcelShop({
 						id: pudo.id,
+						pusId: pudo.pusId,
+						parcelShopId: pudo.parcelShopId,
+						pudoId: pudo.pudoId,
 						name: pudo.name,
 						street: pudo.street,
 						houseno: pudo.houseno,

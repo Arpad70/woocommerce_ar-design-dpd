@@ -4,7 +4,7 @@ Tags: shipping, woocommerce, dpd
 Requires at least: 5.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.6.1
+Stable tag: 8.6.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,11 @@ Pre ďalší vývoj v repozitári pozrite aj dokumenty **DEVELOPER_GUIDE.md** a 
 4. Zobrazenie možnosti exportu do DPD v detaile WooCommerce produktu
 
 == Changelog ==
+
+= 8.6.9 =
+* Fixed DPD Pickup / Pickup Station exports to resolve the correct numeric parcelshop ID before creating PSD labels.
+* Prevented PSD exports from falling back to invalid public PUS IDs that could route labels to the wrong pickup point.
+* Hardened the DPD map widget selection flow to forward dedicated parcelshop and PUS identifiers when available.
 
 = 8.6.0 =
 * Documentation update for the current AR Design architecture.

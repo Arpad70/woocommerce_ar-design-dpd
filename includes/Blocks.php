@@ -38,7 +38,7 @@ class Blocks
      * Validate parcel shop selection before payment processing
      *
      * @param \Automattic\WooCommerce\StoreApi\Utilities\CheckoutTrait $context
-     * @param \Automattic\WooCommerce\StoreApi\Utilities\PaymentResult $result
+        * @param mixed $result
      */
     public static function validateParcelShopBeforePayment($context, $result)
     {

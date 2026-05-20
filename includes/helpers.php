@@ -100,8 +100,7 @@ function ard_dpd_get_plugin_version()
  * Include php template and pass variables there
  *
  * @param string $file_path
- * @param array $variables
- * @param boolean $print
+ * @param array<string, mixed> $variables
  *
  * @return string
  */
@@ -156,6 +155,15 @@ function ard_dpd_is_woocommerce_blocks_enabled()
     return is_woocommerce_blocks_enabled();
 }
 
+/**
+ * Apply both legacy and new filter hooks.
+ *
+ * @param string $legacy_hook
+ * @param string $new_hook
+ * @param mixed $value
+ * @param mixed ...$args
+ * @return mixed
+ */
 function ard_dpd_apply_filters(string $legacy_hook, string $new_hook, $value, ...$args)
 {
     $filtered_value = apply_filters($legacy_hook, $value, ...$args);
@@ -167,6 +175,14 @@ function ard_dpd_apply_filters(string $legacy_hook, string $new_hook, $value, ..
     return apply_filters($new_hook, $filtered_value, ...$args);
 }
 
+/**
+ * Fire both legacy and new action hooks.
+ *
+ * @param string $legacy_hook
+ * @param string $new_hook
+ * @param mixed ...$args
+ * @return void
+ */
 function ard_dpd_do_action(string $legacy_hook, string $new_hook, ...$args): void
 {
     do_action($legacy_hook, ...$args);

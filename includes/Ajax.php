@@ -41,6 +41,10 @@ class Ajax
         );
     }
 
+    /**
+     * @param array<int, string> $keys
+     * @return mixed
+     */
     private static function requestField(array $keys)
     {
         foreach ($keys as $key) {
@@ -52,6 +56,10 @@ class Ajax
         return null;
     }
 
+    /**
+     * @param mixed $value
+     * @return string
+     */
     private static function normalizeBooleanString($value): string
     {
         if ($value === '' || $value === null) {
@@ -150,12 +158,13 @@ class Ajax
 
     private static function enrichParcelshopCapabilities(array $chosenParcelshopData): array
     {
+        $hasValidParcelshopId = self::hasValidParcelshopNumericId($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] ?? '');
         $hasCapabilityData =
             ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY] ?? '') !== '' ||
             ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY] ?? '') !== '' ||
             ($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY] ?? '') !== '';
 
-        if ($hasCapabilityData) {
+        if ($hasValidParcelshopId && $hasCapabilityData) {
             return $chosenParcelshopData;
         }
 
@@ -176,6 +185,20 @@ class Ajax
         $matchedParcelshop = self::findMatchingParcelshop($parcelshops, $chosenParcelshopData);
         if ($matchedParcelshop === null) {
             return $chosenParcelshopData;
+        }
+
+        if (!self::hasValidParcelshopNumericId($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] ?? '')) {
+            $matchedParcelshopId = isset($matchedParcelshop['id']) ? sanitize_text_field((string) $matchedParcelshop['id']) : '';
+            if (self::hasValidParcelshopNumericId($matchedParcelshopId)) {
+                $chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] = $matchedParcelshopId;
+            }
+        }
+
+        if (($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] ?? '') === '') {
+            $matchedParcelshopPusId = isset($matchedParcelshop['pusId']) ? sanitize_text_field((string) $matchedParcelshop['pusId']) : '';
+            if ($matchedParcelshopPusId !== '') {
+                $chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] = $matchedParcelshopPusId;
+            }
         }
 
         if (($chosenParcelshopData[DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY] ?? '') === '') {
@@ -210,6 +233,13 @@ class Ajax
         }
 
         return $chosenParcelshopData;
+    }
+
+    private static function hasValidParcelshopNumericId($value): bool
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' && ctype_digit($value) && (int) $value > 0;
     }
 
     /**

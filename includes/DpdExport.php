@@ -310,11 +310,13 @@ class DpdExport
         }
 
         if (!empty($this->{self::ORDER_HAS_PARCELSHOP_SHIPPING_KEY})) {
-            $parcelShopId = $this->{self::ORDER_PARCELSHOP_PUS_ID} ?: $this->{self::ORDER_PARCELSHOP_ID};
-            if ($parcelShopId) {
+            $parcelShopId = $this->resolveParcelShopDeliveryId();
+            if ($parcelShopId !== 0) {
                 $services['parcelShopDelivery'] = [
-                    'parcelShopId' => (int) $parcelShopId,
+                    'parcelShopId' => $parcelShopId,
                 ];
+            } else {
+                throw new Exception(__('Selected DPD Pickup / Pickup Station could not be resolved to a valid DPD parcelShopId. Please reselect the pickup point and export again.', 'ar-design-dpd'));
             }
         }
 
@@ -433,6 +435,21 @@ class DpdExport
         }
 
         return (int) $value;
+    }
+
+    private function resolveParcelShopDeliveryId(): int
+    {
+        $parcelshopId = $this->normalizeIntegerValue($this->{self::ORDER_PARCELSHOP_ID});
+        if ($parcelshopId > 0) {
+            return $parcelshopId;
+        }
+
+        $parcelshopPusId = trim((string) $this->{self::ORDER_PARCELSHOP_PUS_ID});
+        if ($parcelshopPusId !== '' && ctype_digit($parcelshopPusId)) {
+            return $this->normalizeIntegerValue($parcelshopPusId);
+        }
+
+        return 0;
     }
 
     private function parcelshopSupportsCod(): bool

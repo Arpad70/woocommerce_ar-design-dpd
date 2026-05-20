@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.6.9 - 2026-05-20
+- Fixed DPD Pickup / Pickup Station exports to resolve and persist the correct numeric `parcelshop_id` from the DPD parcelshop API when checkout data only carried the public `pusId`.
+- Changed PSD export payloads to prefer the validated numeric `parcelshop_id` and block export when a valid DPD `parcelShopId` cannot be resolved, preventing labels from routing to the wrong pickup point.
+- Hardened the DPD map widget pickup selection flow to forward dedicated parcelshop and PUS identifiers when the widget provides them.
+
 ## 8.6.8 - 2026-05-19
 - Restored admin STATUSDATA feedback notices so manual imports now report success, warnings and errors again after redirect.
 - Added clearer STATUSDATA diagnostics in the DPD order metabox, including local directory checks, file counts and SFTP readiness hints.
