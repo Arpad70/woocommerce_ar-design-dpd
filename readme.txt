@@ -4,7 +4,7 @@ Tags: shipping, woocommerce, dpd
 Requires at least: 5.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.6.9
+Stable tag: 8.6.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,11 @@ Pre ďalší vývoj v repozitári pozrite aj dokumenty **DEVELOPER_GUIDE.md** a 
 4. Zobrazenie možnosti exportu do DPD v detaile WooCommerce produktu
 
 == Changelog ==
+
+= 8.6.10 =
+* Added post-label workflow automation support including print confirmation handling and automatic order status transitions driven by carrier tracking updates.
+* Added unified DPD tracking diagnostics to the order detail and order list, including mapped workflow status, shipment label, raw status code, service code, location, event time, and last sync.
+* Persisted the latest DPD raw tracking status code and service code in the current tracking snapshot to improve support diagnostics and workflow troubleshooting.
 
 = 8.6.9 =
 * Fixed DPD Pickup / Pickup Station exports to resolve the correct numeric parcelshop ID before creating PSD labels.

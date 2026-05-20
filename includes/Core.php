@@ -21,6 +21,7 @@ class Core
         Assets::init();
         Ajax::init();
         \ArDesign\DPD\Automation::init();
+        \ArDesign\DPD\OrderWorkflow::init();
         Notice::init();
         Shipping::init();
         Order::init();

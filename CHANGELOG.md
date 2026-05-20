@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.6.10 - 2026-05-20
+- Added post-label workflow automation support including print confirmation handling and automatic order status transitions driven by carrier tracking updates.
+- Added unified DPD tracking diagnostics to the order detail and order list, including mapped workflow status, shipment label, raw status code, service code, location, event time, and last sync.
+- Persisted the latest DPD raw tracking status code and service code in the current tracking snapshot to improve support diagnostics and workflow troubleshooting.
+
 ## 8.6.9 - 2026-05-20
 - Fixed DPD Pickup / Pickup Station exports to resolve and persist the correct numeric `parcelshop_id` from the DPD parcelshop API when checkout data only carried the public `pusId`.
 - Changed PSD export payloads to prefer the validated numeric `parcelshop_id` and block export when a valid DPD `parcelShopId` cannot be resolved, preventing labels from routing to the wrong pickup point.

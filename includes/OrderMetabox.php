@@ -207,18 +207,20 @@ class OrderMetabox
         $show_parcelshop_repair = self::shouldShowParcelshopCodRepairAction($order);
 
         if ($dpd_export_result == Order::EXPORT_SUCCESS_STATUS) {
-            $dpd_label_url = $order->get_meta(Order::EXPORT_LABEL_URL_META_KEY, true);
             $dpd_package_number = wp_kses_post($order->get_meta(Order::EXPORT_PACKAGE_NUMBER_META_KEY, true));
 
             echo '<p>' . __('Export Status', 'ar-design-dpd') . ': ' . __('Success', 'ar-design-dpd') . '</p>';
 
-            if ($dpd_label_url) {
-                echo '<p><a href="' . esc_url($dpd_label_url) . '">' . __('Download DPD label', 'ar-design-dpd') . '</a></p>';
+            $labelButtonHtml = OrderList::getLabelDownloadButtonHtml($order, __('Download DPD label', 'ar-design-dpd'));
+            if ($labelButtonHtml !== '') {
+                echo '<p>' . $labelButtonHtml . '</p>';
             }
 
             if ($dpd_package_number) {
                 echo '<p>' . __('Package number', 'ar-design-dpd') . ': <strong>' . $dpd_package_number . '</strong></p>';
             }
+
+            echo self::renderTrackingDiagnostics($order);
 
             if ($statusdata_configured) {
                 echo '<p><small>' . esc_html(sprintf(
@@ -300,6 +302,8 @@ class OrderMetabox
                     <?php echo wp_kses_post(self::renderStatusDataDiagnostics($statusdata_diagnostics)); ?>
                 </div>
             <?php endif; ?>
+
+            <?php echo wp_kses_post(self::renderTrackingDiagnostics($order)); ?>
             
 			<?php if (!empty($bank_id_options)) : ?>
 				<p>
@@ -548,6 +552,82 @@ class OrderMetabox
         $html = '<p><small>';
         $html .= implode('<br>', array_map('esc_html', $lines));
         $html .= '</small></p>';
+
+        return $html;
+    }
+
+    private static function renderTrackingDiagnostics(\WC_Order $order): string
+    {
+        $currentStatus = (string) $order->get_meta('dpd_shipment_tracking_status', true);
+        $currentStatusCode = (string) $order->get_meta('dpd_shipment_tracking_status_code', true);
+        $currentServiceCode = (string) $order->get_meta('dpd_shipment_tracking_service_code', true);
+        $currentLabel = (string) $order->get_meta('dpd_shipment_tracking_label', true);
+        $currentDescription = (string) $order->get_meta('dpd_shipment_tracking_description', true);
+        $currentDate = (string) $order->get_meta('dpd_shipment_tracking_date', true);
+        $currentLocation = (string) $order->get_meta('dpd_shipment_tracking_location', true);
+        $lastSyncAt = (string) $order->get_meta('dpd_shipment_tracking_last_sync_at', true);
+        $shipmentStatus = (string) $order->get_meta(Shipment::STATUS_META_KEY, true);
+        $shipmentStatusLabel = (string) $order->get_meta(Shipment::STATUS_LABEL_META_KEY, true);
+
+        if (
+            $currentStatus === ''
+            && $currentStatusCode === ''
+            && $currentServiceCode === ''
+            && $currentLabel === ''
+            && $currentDescription === ''
+            && $currentDate === ''
+            && $currentLocation === ''
+            && $lastSyncAt === ''
+            && $shipmentStatus === ''
+            && $shipmentStatusLabel === ''
+        ) {
+            return '';
+        }
+
+        $html = '<div style="margin-top:12px;padding:10px;border:1px solid #dcdcde;border-radius:4px;background:#f6f7f7;">';
+        $html .= '<strong>' . esc_html__('DPD Tracking Diagnostics:', 'ar-design-dpd') . '</strong><br/>';
+
+        if ($currentLabel !== '') {
+            $html .= '<strong>' . esc_html__('Current Label:', 'ar-design-dpd') . '</strong> ' . esc_html($currentLabel) . '<br/>';
+        }
+
+        if ($currentStatusCode !== '') {
+            $html .= '<strong>' . esc_html__('Status Code:', 'ar-design-dpd') . '</strong> <code>' . esc_html($currentStatusCode) . '</code><br/>';
+        }
+
+        if ($currentServiceCode !== '') {
+            $html .= '<strong>' . esc_html__('Service Code:', 'ar-design-dpd') . '</strong> <code>' . esc_html($currentServiceCode) . '</code><br/>';
+        }
+
+        if ($currentStatus !== '') {
+            $html .= '<strong>' . esc_html__('Mapped Workflow Status:', 'ar-design-dpd') . '</strong> <code>' . esc_html($currentStatus) . '</code><br/>';
+        }
+
+        if ($shipmentStatusLabel !== '') {
+            $html .= '<strong>' . esc_html__('Shipment Label:', 'ar-design-dpd') . '</strong> ' . esc_html($shipmentStatusLabel) . '<br/>';
+        }
+
+        if ($shipmentStatus !== '') {
+            $html .= '<strong>' . esc_html__('Shipment Status:', 'ar-design-dpd') . '</strong> <code>' . esc_html($shipmentStatus) . '</code><br/>';
+        }
+
+        if ($currentDescription !== '') {
+            $html .= '<strong>' . esc_html__('Carrier Description:', 'ar-design-dpd') . '</strong> ' . esc_html($currentDescription) . '<br/>';
+        }
+
+        if ($currentLocation !== '') {
+            $html .= '<strong>' . esc_html__('Location:', 'ar-design-dpd') . '</strong> ' . esc_html($currentLocation) . '<br/>';
+        }
+
+        if ($currentDate !== '') {
+            $html .= '<strong>' . esc_html__('Event Time:', 'ar-design-dpd') . '</strong> ' . esc_html($currentDate) . '<br/>';
+        }
+
+        if ($lastSyncAt !== '') {
+            $html .= '<strong>' . esc_html__('Last Sync:', 'ar-design-dpd') . '</strong> ' . esc_html($lastSyncAt) . '<br/>';
+        }
+
+        $html .= '</div>';
 
         return $html;
     }

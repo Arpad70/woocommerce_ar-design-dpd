@@ -13,6 +13,8 @@ class Tracking
     private const STATUSDATA_PROCESSED_FILES_OPTION_KEY = 'ard_dpd_statusdata_processed_files';
     private const STATUSDATA_REMOTE_DOWNLOADS_OPTION_KEY = 'ard_dpd_statusdata_remote_downloads';
     public const CURRENT_STATUS_META_KEY = 'dpd_shipment_tracking_status';
+    public const CURRENT_STATUS_CODE_META_KEY = 'dpd_shipment_tracking_status_code';
+    public const CURRENT_SERVICE_CODE_META_KEY = 'dpd_shipment_tracking_service_code';
     public const CURRENT_STATUS_LABEL_META_KEY = 'dpd_shipment_tracking_label';
     public const CURRENT_STATUS_DESCRIPTION_META_KEY = 'dpd_shipment_tracking_description';
     public const CURRENT_STATUS_DATE_META_KEY = 'dpd_shipment_tracking_date';
@@ -1063,6 +1065,8 @@ class Tracking
     {
         $previousStatus = (string) $order->get_meta(self::CURRENT_STATUS_META_KEY, true);
         $currentStatus = (string) ($trackingData['current_status'] ?? '');
+        $currentStatusCode = (string) ($trackingData['latest_scan_code'] ?? '');
+        $currentServiceCode = (string) ($trackingData['latest_service_code'] ?? '');
         $currentLabel = (string) ($trackingData['current_label'] ?? $currentStatus);
         $currentDescription = (string) ($trackingData['current_description'] ?? '');
         $currentDate = (string) ($trackingData['current_date'] ?? current_time('mysql'));
@@ -1070,6 +1074,8 @@ class Tracking
         $events = isset($trackingData['events']) && is_array($trackingData['events']) ? $trackingData['events'] : [];
 
         $order->update_meta_data(self::CURRENT_STATUS_META_KEY, $currentStatus);
+        $order->update_meta_data(self::CURRENT_STATUS_CODE_META_KEY, $currentStatusCode);
+        $order->update_meta_data(self::CURRENT_SERVICE_CODE_META_KEY, $currentServiceCode);
         $order->update_meta_data(self::CURRENT_STATUS_LABEL_META_KEY, $currentLabel);
         $order->update_meta_data(self::CURRENT_STATUS_DESCRIPTION_META_KEY, $currentDescription);
         $order->update_meta_data(self::CURRENT_STATUS_DATE_META_KEY, $currentDate);
@@ -1087,6 +1093,10 @@ class Tracking
                 $currentLabel ?: $currentStatus,
                 $currentLocation ? ' (' . $currentLocation . ')' : ''
             ));
+        }
+
+        if ($allowDeliveryHooks) {
+            OrderWorkflow::handleTrackingUpdate($order, $trackingData);
         }
 
         if ($allowDeliveryHooks && self::isDeliveredStatus($currentStatus, $currentLabel, $currentDescription)) {
@@ -1115,6 +1125,8 @@ class Tracking
 
             $normalizedEvent = [
                 'status' => (string) ($event['status'] ?? ''),
+                'status_code' => (string) ($event['raw_scan_code'] ?? ''),
+                'service_code' => (string) ($event['raw_service_code'] ?? ''),
                 'label' => (string) ($event['label'] ?? ''),
                 'description' => (string) ($event['description'] ?? ''),
                 'date' => (string) ($event['date'] ?? current_time('mysql')),
