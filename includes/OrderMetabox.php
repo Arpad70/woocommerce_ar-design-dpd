@@ -220,6 +220,7 @@ class OrderMetabox
                 echo '<p>' . __('Package number', 'ar-design-dpd') . ': <strong>' . $dpd_package_number . '</strong></p>';
             }
 
+            echo self::renderStatusDataSyncNotice($order, $default_settings);
             echo self::renderTrackingDiagnostics($order);
 
             if ($statusdata_configured) {
@@ -303,6 +304,7 @@ class OrderMetabox
                 </div>
             <?php endif; ?>
 
+            <?php echo wp_kses_post(self::renderStatusDataSyncNotice($order, $default_settings)); ?>
             <?php echo wp_kses_post(self::renderTrackingDiagnostics($order)); ?>
             
 			<?php if (!empty($bank_id_options)) : ?>
@@ -628,6 +630,65 @@ class OrderMetabox
         }
 
         $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * @param array<string, mixed> $settings
+     */
+    private static function renderStatusDataSyncNotice(\WC_Order $order, array $settings): string
+    {
+        $diagnostics = Tracking::getStatusDataLookupDiagnostics($order, $settings);
+        $trackingNumber = (string) ($diagnostics['tracking_number'] ?? '');
+
+        if (
+            $trackingNumber === ''
+            && empty($diagnostics['tracking_enabled'])
+            && empty($diagnostics['statusdata_files_exist'])
+        ) {
+            return '';
+        }
+
+        $noticeClass = !empty($diagnostics['sync_running']) && !empty($diagnostics['statusdata_files_exist'])
+            ? (!empty($diagnostics['matching_rows_found']) ? 'notice-success' : 'notice-warning')
+            : 'notice-warning';
+        $lines = [];
+
+        $lines[] = sprintf(
+            /* translators: %s: yes/no state */
+            __('Tracking sync běží: %s', 'ar-design-dpd'),
+            !empty($diagnostics['sync_running']) ? __('ano', 'ar-design-dpd') : __('ne', 'ar-design-dpd')
+        );
+        $lines[] = sprintf(
+            /* translators: 1: yes/no state, 2: number of local STATUSDATA files */
+            __('STATUSDATA soubory existují: %1$s (%2$d)', 'ar-design-dpd'),
+            !empty($diagnostics['statusdata_files_exist']) ? __('ano', 'ar-design-dpd') : __('ne', 'ar-design-dpd'),
+            (int) ($diagnostics['local_file_count'] ?? 0)
+        );
+
+        if ($trackingNumber !== '') {
+            if (!empty($diagnostics['matching_rows_found'])) {
+                $lines[] = sprintf(
+                    /* translators: 1: parcel number, 2: number of matching rows, 3: comma separated STATUSDATA files */
+                    __('Pro parcel číslo %1$s byly nalezeny %2$d řádky v souborech: %3$s.', 'ar-design-dpd'),
+                    $trackingNumber,
+                    (int) ($diagnostics['matching_row_count'] ?? 0),
+                    implode(', ', array_map('sanitize_text_field', (array) ($diagnostics['matching_files'] ?? [])))
+                );
+            } elseif (!empty($diagnostics['statusdata_files_exist'])) {
+                $lines[] = sprintf(
+                    /* translators: %s: parcel number */
+                    __('Ale pro parcel číslo %s nebyl nalezen žádný řádek.', 'ar-design-dpd'),
+                    $trackingNumber
+                );
+            }
+        }
+
+        $html = '<div class="notice inline ' . esc_attr($noticeClass) . '" style="margin:12px 0 0;padding:0 10px;">';
+        $html .= '<p><strong>' . esc_html__('DPD sync diagnostika', 'ar-design-dpd') . '</strong><br>';
+        $html .= implode('<br>', array_map('esc_html', $lines));
+        $html .= '</p></div>';
 
         return $html;
     }

@@ -1266,6 +1266,108 @@ class Tracking
 
     /**
      * @return array{
+     *   tracking_enabled: bool,
+     *   cron_scheduled: bool,
+     *   sync_running: bool,
+     *   directory: string,
+     *   statusdata_files_exist: bool,
+     *   local_file_count: int,
+     *   tracking_number: string,
+     *   matching_rows_found: bool,
+     *   matching_row_count: int,
+     *   matching_files: array<int, string>
+     * }
+     */
+    public static function getStatusDataLookupDiagnostics(WC_Order $order, ?array $settings = null): array
+    {
+        $settings = is_array($settings) ? $settings : DpdExportSettings::getDefaultSettings();
+        $directory = isset($settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY])
+            ? trim((string) $settings[DpdExportSettings::STATUSDATA_DIRECTORY_OPTION_KEY])
+            : '';
+        $trackingNumber = self::getOrderTrackingNumber($order);
+        $trackingEnabled = self::isTrackingEnabled();
+        $cronScheduled = (bool) wp_next_scheduled(self::CRON_HOOK);
+        $files = ($directory !== '' && is_dir($directory) && is_readable($directory))
+            ? self::getStatusDataFiles($directory)
+            : [];
+
+        $diagnostics = [
+            'tracking_enabled' => $trackingEnabled,
+            'cron_scheduled' => $cronScheduled,
+            'sync_running' => $trackingEnabled && $cronScheduled,
+            'directory' => $directory,
+            'statusdata_files_exist' => $files !== [],
+            'local_file_count' => count($files),
+            'tracking_number' => $trackingNumber,
+            'matching_rows_found' => false,
+            'matching_row_count' => 0,
+            'matching_files' => [],
+        ];
+
+        if ($trackingNumber === '' || $files === []) {
+            return $diagnostics;
+        }
+
+        static $lookupCache = [];
+        $cacheKey = md5($directory . '|' . $trackingNumber);
+
+        if (isset($lookupCache[$cacheKey]) && is_array($lookupCache[$cacheKey])) {
+            return array_merge($diagnostics, $lookupCache[$cacheKey]);
+        }
+
+        $matchingFiles = [];
+        $matchingRowCount = 0;
+
+        foreach ($files as $filePath) {
+            $rows = self::parseStatusDataFile($filePath);
+            if ($rows === []) {
+                continue;
+            }
+
+            $fileMatched = false;
+
+            foreach ($rows as $row) {
+                if ((string) ($row['PARCELNO'] ?? '') !== $trackingNumber) {
+                    continue;
+                }
+
+                $matchingRowCount++;
+                $fileMatched = true;
+            }
+
+            if ($fileMatched) {
+                $matchingFiles[] = wp_basename($filePath);
+            }
+        }
+
+        $lookupCache[$cacheKey] = [
+            'matching_rows_found' => $matchingRowCount > 0,
+            'matching_row_count' => $matchingRowCount,
+            'matching_files' => array_values(array_unique($matchingFiles)),
+        ];
+
+        return array_merge($diagnostics, $lookupCache[$cacheKey]);
+    }
+
+    private static function getOrderTrackingNumber(WC_Order $order): string
+    {
+        foreach ([
+            Order::EXPORT_PACKAGE_NUMBER_META_KEY,
+            Order::TRACKING_NUMBER_META_KEY,
+            Shipment::PRIMARY_TRACKING_NUMBER_META_KEY,
+        ] as $metaKey) {
+            $value = trim((string) $order->get_meta($metaKey, true));
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @return array{
      *   carrier: string,
      *   carrier_label: string,
      *   label_url: string,

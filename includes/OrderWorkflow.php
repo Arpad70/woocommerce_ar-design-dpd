@@ -8,62 +8,43 @@ defined('ABSPATH') || exit;
 
 class OrderWorkflow
 {
-    public const RETURN_STATUS = 'vratka';
-    public const READY_TO_SHIP_STATUS = 'na-odoslanie';
-    public const IN_TRANSIT_STATUS = 'v-preprave';
-    public const MANUAL_REVIEW_STATUS = 'manual-review';
+    public const RETURN_STATUS = ARD_WORKFLOW_STATUS_RETURN;
+    public const READY_TO_SHIP_STATUS = ARD_WORKFLOW_STATUS_READY_TO_SHIP;
+    public const IN_TRANSIT_STATUS = ARD_WORKFLOW_STATUS_IN_TRANSIT;
+    public const MANUAL_REVIEW_STATUS = ARD_WORKFLOW_STATUS_MANUAL_REVIEW;
+
+    private const MANAGED_STATUSES = [
+        self::READY_TO_SHIP_STATUS,
+        self::IN_TRANSIT_STATUS,
+        self::RETURN_STATUS,
+    ];
 
     public static function init(): void
     {
-        add_action('init', [__CLASS__, 'registerReturnStatus']);
-        add_filter('wc_order_statuses', [__CLASS__, 'registerReturnStatusInLists']);
+        add_action('init', [__CLASS__, 'registerWorkflowStatuses']);
+        add_filter('wc_order_statuses', [__CLASS__, 'registerWorkflowStatusesInLists']);
     }
 
-    public static function registerReturnStatus(): void
+    public static function registerWorkflowStatuses(): void
     {
-        $statusKey = 'wc-' . self::RETURN_STATUS;
+        ard_workflow_register_post_statuses(self::MANAGED_STATUSES, 'ar-design-dpd');
+    }
 
-        if (\function_exists('post_status_exists') && \post_status_exists($statusKey)) {
-            return;
-        }
-
-        register_post_status(
-            $statusKey,
-            [
-                'label' => _x('Vratka', 'Order status', 'ar-design-dpd'),
-                'public' => true,
-                'exclude_from_search' => false,
-                'show_in_admin_all_list' => true,
-                'show_in_admin_status_list' => true,
-                'label_count' => _n_noop('Vratka <span class="count">(%s)</span>', 'Vratka <span class="count">(%s)</span>', 'ar-design-dpd'),
-            ]
+    public static function registerWorkflowStatusesInLists(array $statuses): array
+    {
+        $statuses = ard_workflow_insert_statuses_after(
+            $statuses,
+            [self::READY_TO_SHIP_STATUS, self::IN_TRANSIT_STATUS],
+            'ar-design-dpd',
+            'wc-processing'
         );
-    }
 
-    public static function registerReturnStatusInLists(array $statuses): array
-    {
-        $statusKey = 'wc-' . self::RETURN_STATUS;
-        if (isset($statuses[$statusKey])) {
-            return $statuses;
-        }
-
-        $result = [];
-        $inserted = false;
-
-        foreach ($statuses as $key => $label) {
-            $result[$key] = $label;
-
-            if (in_array($key, ['wc-v-preprave', 'wc-na-odoslanie', 'wc-completed'], true)) {
-                $result[$statusKey] = __('Vratka', 'ar-design-dpd');
-                $inserted = true;
-            }
-        }
-
-        if (!$inserted) {
-            $result[$statusKey] = __('Vratka', 'ar-design-dpd');
-        }
-
-        return $result;
+        return ard_workflow_insert_statuses_after(
+            $statuses,
+            [self::RETURN_STATUS],
+            'ar-design-dpd',
+            'wc-v-preprave'
+        );
     }
 
     public static function markLabelPrinted(WC_Order $order): bool
@@ -132,7 +113,7 @@ class OrderWorkflow
         bool $notifyCustomer = false,
         array $blockedStatuses = []
     ): bool {
-        $targetStatus = sanitize_key($targetStatus);
+        $targetStatus = ard_workflow_normalize_status($targetStatus);
         if ($targetStatus === '') {
             return false;
         }
@@ -168,6 +149,6 @@ class OrderWorkflow
     {
         $statuses = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
 
-        return isset($statuses['wc-' . $status]);
+        return isset($statuses[ard_workflow_wc_status_key($status)]);
     }
 }

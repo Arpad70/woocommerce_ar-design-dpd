@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.6.11 - 2026-05-21
+- Centralized DPD workflow status registration on the shared AR Design workflow catalog so carrier plugins no longer keep drifting status slug copies.
+- Removed duplicate `manual-review` ownership from the DPD workflow layer while preserving DPD-driven transitions for `na-odoslanie`, `v-preprave`, and `vratka`.
+- Published the follow-up release that aligns the repository state with the working site diagnostics and workflow refactor.
+
 ## 8.6.10 - 2026-05-20
 - Added post-label workflow automation support including print confirmation handling and automatic order status transitions driven by carrier tracking updates.
 - Added unified DPD tracking diagnostics to the order detail and order list, including mapped workflow status, shipment label, raw status code, service code, location, event time, and last sync.

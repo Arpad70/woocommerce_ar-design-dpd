@@ -945,6 +945,15 @@ class Order
             return false;
         }
 
+        if (count($processing_order_ids) === 1) {
+            $processedOrder = wc_get_order((int) $processing_order_ids[0]);
+
+            if ($processedOrder instanceof \WC_Order) {
+                OrderWorkflow::markLabelPrinted($processedOrder);
+                $processedOrder->save();
+            }
+        }
+
         // Generate pdf
         header('Content-type: application/pdf');
         header('Content-Disposition: attachment; filename="labels.pdf"');
