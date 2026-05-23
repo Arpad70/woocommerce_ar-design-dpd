@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.6.13 - 2026-05-23
+- Fixed DPD Pickup / Pickup Station export fallback for legacy orders that were missing both numeric `parcelshop_id` and `pus_id`: parcelshop identity can now be re-matched from DPD API using stored address metadata.
+- Added a broader `Repair ParcelShop data` admin action so production operators can refresh parcelshop identity metadata (and COD capability metadata for COD orders) before re-running export.
+- Improved the PSD export error message and CLI repair helper to make parcelshop identity recovery explicit during support triage.
+
 ## 8.6.12 - 2026-05-21
 - Added a self-healing legacy translation alias bootstrap that recreates missing `wc-dpd-<locale>` language files from the bundled AR Design translations when the global WordPress language directory is incomplete.
 - Prevented repeated PHP warnings about missing `wp-content/languages/plugins/wc-dpd-*.l10n.php` on environments that still probe the historical `wc-dpd` text domain alias.

@@ -316,7 +316,7 @@ class DpdExport
                     'parcelShopId' => $parcelShopId,
                 ];
             } else {
-                throw new Exception(__('Selected DPD Pickup / Pickup Station could not be resolved to a valid DPD parcelShopId. Please reselect the pickup point and export again.', 'ar-design-dpd'));
+                throw new Exception(__('Selected DPD Pickup / Pickup Station could not be resolved to a valid DPD parcelShopId. Please reselect the pickup point or run Repair ParcelShop data in the DPD metabox and export again.', 'ar-design-dpd'));
             }
         }
 

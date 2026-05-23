@@ -112,12 +112,27 @@ class OrderMetabox
 
             if (isset($_POST['order_id']) && !empty($_POST['order_id'])) {
                 $order_id = absint($_POST['order_id']);
-                $result = Order::repairParcelshopCapabilityMeta($order_id, true);
+                $order = wc_get_order($order_id);
+                $messages = [];
+                $updated = false;
 
-                if (!empty($result['updated'])) {
-                    Notice::success((string) ($result['message'] ?? __('Parcelshop capability metadata was refreshed from DPD API.', 'ar-design-dpd')));
+                $identityResult = \ArDesign\DPD\Order::repairParcelshopIdentityMeta($order_id, true);
+                $messages[] = (string) ($identityResult['message'] ?? __('Parcelshop identity metadata did not require any change.', 'ar-design-dpd'));
+                $updated = $updated || !empty($identityResult['updated']);
+
+                if ($order instanceof \WC_Order && $order->get_payment_method() === 'cod') {
+                    $capabilityResult = \ArDesign\DPD\Order::repairParcelshopCapabilityMeta($order_id, true);
+                    $messages[] = (string) ($capabilityResult['message'] ?? __('Parcelshop capability metadata did not require any change.', 'ar-design-dpd'));
+                    $updated = $updated || !empty($capabilityResult['updated']);
+                }
+
+                $messages = array_values(array_unique(array_filter(array_map('trim', $messages))));
+                $noticeMessage = implode(' ', $messages);
+
+                if ($updated) {
+                    Notice::success($noticeMessage ?: __('Parcelshop metadata was refreshed from DPD API.', 'ar-design-dpd'));
                 } else {
-                    Notice::add((string) ($result['message'] ?? __('Parcelshop capability metadata did not require any change.', 'ar-design-dpd')), 'warning');
+                    Notice::add($noticeMessage ?: __('Parcelshop metadata did not require any change.', 'ar-design-dpd'), 'warning');
                 }
 
                 $order_edit_url = admin_url('post.php?post=' . $order_id . '&action=edit');
@@ -241,7 +256,7 @@ class OrderMetabox
             echo '<input type="hidden" name="order_id" value="' . esc_attr($order_id) . '">';
 
             if ($show_parcelshop_repair) {
-                echo '<p><input type="submit" class="button" value="' . esc_attr__('Repair ParcelShop COD data', 'ar-design-dpd') . '" name="' . esc_attr(self::REPAIR_PARCELSHOP_COD_ACTION_KEY) . '"></p>';
+                echo '<p><input type="submit" class="button" value="' . esc_attr__('Repair ParcelShop data', 'ar-design-dpd') . '" name="' . esc_attr(self::REPAIR_PARCELSHOP_COD_ACTION_KEY) . '"></p>';
             }
 
             echo '<input type="submit" class="button" value="' . __('Reset', 'ar-design-dpd') . '" name="' . esc_attr(self::RESET_ACTION_KEY) . '">';
@@ -383,7 +398,7 @@ class OrderMetabox
 
             <?php if ($show_parcelshop_repair) : ?>
                 <p>
-                    <input type="submit" class="button" value="<?php esc_attr_e('Repair ParcelShop COD data', 'ar-design-dpd'); ?>" name="<?php echo esc_attr(self::REPAIR_PARCELSHOP_COD_ACTION_KEY); ?>">
+                    <input type="submit" class="button" value="<?php esc_attr_e('Repair ParcelShop data', 'ar-design-dpd'); ?>" name="<?php echo esc_attr(self::REPAIR_PARCELSHOP_COD_ACTION_KEY); ?>">
                 </p>
             <?php endif; ?>
 
@@ -472,11 +487,7 @@ class OrderMetabox
 
     private static function shouldShowParcelshopCodRepairAction(\WC_Order $order): bool
     {
-        if (!Order::hasParcelShpping($order)) {
-            return false;
-        }
-
-        return $order->get_payment_method() === 'cod';
+        return Order::hasParcelShpping($order);
     }
 
     /**

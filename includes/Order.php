@@ -660,6 +660,124 @@ class Order
         ];
     }
 
+    /**
+     * @param \WC_Order|int $order
+     * @param bool $force
+     * @return array<string, mixed>
+     */
+    public static function repairParcelshopIdentityMeta($order, bool $force = false): array
+    {
+        if (is_numeric($order)) {
+            $order = wc_get_order((int) $order);
+        }
+
+        if (!$order instanceof \WC_Order) {
+            return [
+                'updated' => false,
+                'message' => __('Order was not found.', 'ar-design-dpd'),
+                'meta' => [],
+            ];
+        }
+
+        if (!self::hasParcelShpping($order)) {
+            return [
+                'updated' => false,
+                'message' => __('Order does not use DPD Pickup / Pickup Station shipping.', 'ar-design-dpd'),
+                'meta' => [],
+            ];
+        }
+
+        $existingMeta = self::getParcelshopMetaForApiLookup($order);
+        $hasValidParcelshopId = self::hasValidParcelshopNumericId($existingMeta[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] ?? '');
+        $hasPusId = ($existingMeta[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] ?? '') !== '';
+
+        if (!$force && $hasValidParcelshopId && $hasPusId) {
+            return [
+                'updated' => false,
+                'message' => __('Parcelshop identity metadata is already filled in.', 'ar-design-dpd'),
+                'meta' => $existingMeta,
+            ];
+        }
+
+        $requiredLookupFields = [
+            DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY,
+            DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY,
+            DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY,
+        ];
+
+        foreach ($requiredLookupFields as $requiredLookupField) {
+            if (($existingMeta[$requiredLookupField] ?? '') !== '') {
+                continue;
+            }
+
+            return [
+                'updated' => false,
+                'message' => __('Parcelshop identity metadata is incomplete and cannot be refreshed from DPD API.', 'ar-design-dpd'),
+                'meta' => $existingMeta,
+            ];
+        }
+
+        try {
+            $parcelshops = (new Client())->searchParcelShop(
+                $existingMeta[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY],
+                $existingMeta[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY],
+                $existingMeta[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY]
+            );
+        } catch (\Throwable $exception) {
+            return [
+                'updated' => false,
+                'message' => $exception->getMessage(),
+                'meta' => $existingMeta,
+            ];
+        }
+
+        $matchedParcelshop = self::findMatchingParcelshop($parcelshops, $existingMeta);
+        if ($matchedParcelshop === null) {
+            return [
+                'updated' => false,
+                'message' => __('Matching parcelshop identity was not found in DPD API response.', 'ar-design-dpd'),
+                'meta' => $existingMeta,
+            ];
+        }
+
+        $refreshedMeta = [
+            DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY => self::sanitizeParcelshopApiTextValue($matchedParcelshop['id'] ?? ''),
+            DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY => self::sanitizeParcelshopApiTextValue($matchedParcelshop['pusId'] ?? ''),
+        ];
+
+        $updated = false;
+        foreach ($refreshedMeta as $metaKey => $metaValue) {
+            if ($metaValue === '') {
+                continue;
+            }
+
+            if (!$force && ($existingMeta[$metaKey] ?? '') === $metaValue) {
+                continue;
+            }
+
+            if (!$force && ($existingMeta[$metaKey] ?? '') !== '') {
+                continue;
+            }
+
+            $order->update_meta_data($metaKey, $metaValue);
+            $updated = true;
+        }
+
+        if ($updated) {
+            $order->save_meta_data();
+        }
+
+        return [
+            'updated' => $updated,
+            'message' => $updated
+                ? __('Parcelshop identity metadata was refreshed from DPD API.', 'ar-design-dpd')
+                : __('No parcelshop identity metadata had to be changed.', 'ar-design-dpd'),
+            'meta' => array_merge($existingMeta, array_filter($refreshedMeta, static function ($value) {
+                return $value !== '' && $value !== null;
+            })),
+        ];
+    }
+
     private static function getParcelshopCapabilityMetaFromOrder(\WC_Order $order): array
     {
         return [
@@ -674,6 +792,8 @@ class Order
         return [
             DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY => (string) $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY, true),
             DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY => (string) $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY, true),
+            DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY => (string) $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY, true),
+            DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY => (string) $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY, true),
             DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY => (string) $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY, true),
             DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY => (string) $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY, true),
             DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY => (string) $order->get_meta(DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY, true),
@@ -702,39 +822,10 @@ class Order
             return $parcelshopMeta;
         }
 
-        try {
-            $parcelshops = (new Client())->searchParcelShop(
-                $parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY],
-                $parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY],
-                $parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY]
-            );
-        } catch (\Throwable $exception) {
-            return $parcelshopMeta;
-        }
+        $repairResult = self::repairParcelshopIdentityMeta($order, false);
 
-        $matchedParcelshop = self::findMatchingParcelshop($parcelshops, $parcelshopMeta);
-        if ($matchedParcelshop === null) {
-            return $parcelshopMeta;
-        }
-
-        $resolvedParcelshopId = self::sanitizeParcelshopApiTextValue($matchedParcelshop['id'] ?? '');
-        $resolvedParcelshopPusId = self::sanitizeParcelshopApiTextValue($matchedParcelshop['pusId'] ?? '');
-        $didUpdate = false;
-
-        if (!$hasValidParcelshopId && self::hasValidParcelshopNumericId($resolvedParcelshopId)) {
-            $parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY] = $resolvedParcelshopId;
-            $order->update_meta_data(DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY, $resolvedParcelshopId);
-            $didUpdate = true;
-        }
-
-        if (!$hasPusId && $resolvedParcelshopPusId !== '') {
-            $parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY] = $resolvedParcelshopPusId;
-            $order->update_meta_data(DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY, $resolvedParcelshopPusId);
-            $didUpdate = true;
-        }
-
-        if ($didUpdate) {
-            $order->save_meta_data();
+        if (!empty($repairResult['meta']) && is_array($repairResult['meta'])) {
+            return array_merge($parcelshopMeta, $repairResult['meta']);
         }
 
         return $parcelshopMeta;
@@ -762,7 +853,110 @@ class Order
             }
         }
 
+        $locationMatches = [];
+
+        foreach ($parcelshops as $parcelshop) {
+            if (!is_array($parcelshop) || !self::parcelshopCandidateMatchesLocation($parcelshop, $parcelshopMeta)) {
+                continue;
+            }
+
+            $locationMatches[] = $parcelshop;
+        }
+
+        if ($locationMatches === []) {
+            return null;
+        }
+
+        if (count($locationMatches) === 1) {
+            return $locationMatches[0];
+        }
+
+        $bestMatch = null;
+        $bestScore = 0;
+        $isTie = false;
+
+        foreach ($locationMatches as $parcelshop) {
+            $score = self::scoreParcelshopCandidateMatch($parcelshop, $parcelshopMeta);
+            if ($score <= 0) {
+                continue;
+            }
+
+            if ($score > $bestScore) {
+                $bestMatch = $parcelshop;
+                $bestScore = $score;
+                $isTie = false;
+                continue;
+            }
+
+            if ($score === $bestScore) {
+                $isTie = true;
+            }
+        }
+
+        if ($bestMatch !== null && !$isTie) {
+            return $bestMatch;
+        }
+
         return null;
+    }
+
+    private static function parcelshopCandidateMatchesLocation(array $parcelshop, array $parcelshopMeta): bool
+    {
+        $expectedZip = self::normalizeParcelshopComparableZip($parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY] ?? '');
+        $expectedCity = self::normalizeParcelshopComparableString($parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY] ?? '');
+        $expectedCountry = self::normalizeParcelshopComparableString($parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY] ?? '');
+
+        $candidateZip = self::normalizeParcelshopComparableZip($parcelshop['zip'] ?? '');
+        $candidateCity = self::normalizeParcelshopComparableString($parcelshop['city'] ?? '');
+        $candidateCountryValue = $parcelshop['countryCode'] ?? ($parcelshop['country'] ?? '');
+        if (is_array($candidateCountryValue)) {
+            $candidateCountryValue = $candidateCountryValue['code'] ?? ($candidateCountryValue['value'] ?? '');
+        }
+        $candidateCountry = self::normalizeParcelshopComparableString($candidateCountryValue);
+
+        return $expectedZip !== ''
+            && $expectedCity !== ''
+            && $expectedCountry !== ''
+            && $candidateZip === $expectedZip
+            && $candidateCity === $expectedCity
+            && $candidateCountry === $expectedCountry;
+    }
+
+    private static function scoreParcelshopCandidateMatch(array $parcelshop, array $parcelshopMeta): int
+    {
+        $score = 0;
+
+        $expectedName = self::normalizeParcelshopComparableString($parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY] ?? '');
+        $expectedStreet = self::normalizeParcelshopComparableString($parcelshopMeta[DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY] ?? '');
+
+        $candidateName = self::normalizeParcelshopComparableString($parcelshop['name'] ?? '');
+        $candidateStreet = self::normalizeParcelshopComparableString(self::buildParcelshopCandidateStreet($parcelshop));
+
+        if ($expectedName !== '' && $candidateName !== '') {
+            if ($candidateName === $expectedName) {
+                $score += 4;
+            } elseif (str_contains($candidateName, $expectedName) || str_contains($expectedName, $candidateName)) {
+                $score += 2;
+            }
+        }
+
+        if ($expectedStreet !== '' && $candidateStreet !== '') {
+            if ($candidateStreet === $expectedStreet) {
+                $score += 4;
+            } elseif (str_contains($candidateStreet, $expectedStreet) || str_contains($expectedStreet, $candidateStreet)) {
+                $score += 2;
+            }
+        }
+
+        return $score;
+    }
+
+    private static function buildParcelshopCandidateStreet(array $parcelshop): string
+    {
+        $street = self::sanitizeParcelshopApiTextValue($parcelshop['street'] ?? '');
+        $houseNumber = self::sanitizeParcelshopApiTextValue($parcelshop['houseno'] ?? ($parcelshop['houseNo'] ?? ''));
+
+        return trim($street . ' ' . $houseNumber);
     }
 
     private static function extractParcelshopProperty(array $parcelshop, string $propertyKey)
@@ -834,6 +1028,37 @@ class Order
         }
 
         return sanitize_text_field((string) $value);
+    }
+
+    private static function normalizeParcelshopComparableString($value): string
+    {
+        if (is_array($value)) {
+            $value = $value['code'] ?? ($value['value'] ?? '');
+        }
+
+        $normalized = sanitize_text_field((string) $value);
+        if ($normalized === '') {
+            return '';
+        }
+
+        if (function_exists('remove_accents')) {
+            $normalized = remove_accents($normalized);
+        }
+
+        $normalized = strtolower($normalized);
+        $normalized = preg_replace('/[^a-z0-9]+/', ' ', $normalized);
+
+        return trim((string) $normalized);
+    }
+
+    private static function normalizeParcelshopComparableZip($value): string
+    {
+        $normalized = sanitize_text_field((string) $value);
+        if ($normalized === '') {
+            return '';
+        }
+
+        return preg_replace('/\s+/', '', $normalized) ?: '';
     }
 
     private static function hasValidParcelshopNumericId($value): bool
