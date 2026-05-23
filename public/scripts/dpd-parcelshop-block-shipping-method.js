@@ -1,4 +1,14 @@
 /*
+ * @deprecated 2026-05-23 This legacy standalone block DOM injector is no longer
+ * enqueued. DPD Checkout Blocks now use the registry-based integration script
+ * `dpd-parcelshop-checkout-blocks-registry.js`.
+ *
+ * Kept temporarily in the repository as a deprecated artifact until the next
+ * asset cleanup/rebuild wave.
+ */
+
+if (false) {
+/*
  * ATTENTION: An "eval-source-map" devtool has been used.
  * This devtool is neither made for production nor for readable output files.
  * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
@@ -30,3 +40,4 @@ eval("(function () {\n  var DPD = {\n    TEMPLATE_CLASS: 'dpd-parcelshop-contain
 /******/ 	
 /******/ })()
 ;
+}

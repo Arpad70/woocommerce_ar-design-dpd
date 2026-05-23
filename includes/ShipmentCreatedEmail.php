@@ -81,7 +81,11 @@ class ShipmentCreatedEmail extends WC_Email
         $this->restore_locale();
 
         if ($sent) {
-            $this->object->update_meta_data(Shipment::HANDOVER_EMAIL_SENT_AT_META_KEY, current_time('mysql'));
+            \ArDesign\DPD\Shipment::storeTimestampMeta(
+                $this->object,
+                \ArDesign\DPD\Shipment::HANDOVER_EMAIL_SENT_AT_META_KEY,
+                \ArDesign\DPD\Shipment::HANDOVER_EMAIL_SENT_AT_GMT_META_KEY
+            );
             $this->object->save_meta_data();
             $this->object->add_order_note(__('Automatic shipment handover email with tracking information was sent to the customer.', 'ar-design-dpd'));
         }

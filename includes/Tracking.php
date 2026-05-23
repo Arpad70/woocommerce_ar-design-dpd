@@ -21,8 +21,10 @@ class Tracking
     public const CURRENT_STATUS_LOCATION_META_KEY = 'dpd_shipment_tracking_location';
     public const STATUS_HISTORY_META_KEY = 'dpd_shipment_tracking_history';
     public const LAST_SYNC_AT_META_KEY = 'dpd_shipment_tracking_last_sync_at';
+    public const LAST_SYNC_AT_GMT_META_KEY = 'dpd_shipment_tracking_last_sync_at_gmt';
     public const LAST_SYNC_ERROR_META_KEY = 'dpd_shipment_tracking_last_error';
     public const DELIVERY_CONFIRMED_AT_META_KEY = 'dpd_shipment_delivered_at';
+    public const DELIVERY_CONFIRMED_AT_GMT_META_KEY = 'dpd_shipment_delivered_at_gmt';
     public const DELIVERY_EMAIL_SENT_AT_META_KEY = 'dpd_shipment_delivery_followup_sent_at';
 
     public static function init()
@@ -1080,7 +1082,7 @@ class Tracking
         $order->update_meta_data(self::CURRENT_STATUS_DESCRIPTION_META_KEY, $currentDescription);
         $order->update_meta_data(self::CURRENT_STATUS_DATE_META_KEY, $currentDate);
         $order->update_meta_data(self::CURRENT_STATUS_LOCATION_META_KEY, $currentLocation);
-        $order->update_meta_data(self::LAST_SYNC_AT_META_KEY, current_time('mysql'));
+        Shipment::storeTimestampMeta($order, self::LAST_SYNC_AT_META_KEY, self::LAST_SYNC_AT_GMT_META_KEY);
         $order->delete_meta_data(self::LAST_SYNC_ERROR_META_KEY);
         $order->update_meta_data(self::STATUS_HISTORY_META_KEY, self::mergeTrackingHistory($order, $events));
 
@@ -1165,7 +1167,7 @@ class Tracking
             return;
         }
 
-        $order->update_meta_data(self::DELIVERY_CONFIRMED_AT_META_KEY, current_time('mysql'));
+        Shipment::storeTimestampMeta($order, self::DELIVERY_CONFIRMED_AT_META_KEY, self::DELIVERY_CONFIRMED_AT_GMT_META_KEY);
 
         $shipmentData = Shipment::markDelivered($order, self::buildShipmentDataFromTracking($order, $trackingData, true));
 
@@ -1206,7 +1208,7 @@ class Tracking
             'label_url' => $existingShipment['label_url'] ?: (string) $order->get_meta(Order::EXPORT_LABEL_URL_META_KEY, true),
             'status' => $isDelivered ? 'delivered' : $currentStatus,
             'status_label' => $isDelivered ? __('Shipment delivered', 'ar-design-dpd') : ($currentLabel ?: $currentStatus),
-            'updated_at' => current_time('mysql'),
+            'updated_at' => Shipment::currentGmtMysql(),
             'payload' => $trackingData ?: (array) ($existingShipment['payload'] ?? []),
         ]);
     }
@@ -1258,7 +1260,7 @@ class Tracking
             'description' => (string) $order->get_meta(self::CURRENT_STATUS_DESCRIPTION_META_KEY, true),
             'date' => (string) $order->get_meta(self::CURRENT_STATUS_DATE_META_KEY, true),
             'location' => (string) $order->get_meta(self::CURRENT_STATUS_LOCATION_META_KEY, true),
-            'last_sync_at' => (string) $order->get_meta(self::LAST_SYNC_AT_META_KEY, true),
+            'last_sync_at' => Shipment::getPreferredTimestamp($order, self::LAST_SYNC_AT_GMT_META_KEY, self::LAST_SYNC_AT_META_KEY),
             'last_error' => (string) $order->get_meta(self::LAST_SYNC_ERROR_META_KEY, true),
             'history' => (array) $order->get_meta(self::STATUS_HISTORY_META_KEY, true),
         ];

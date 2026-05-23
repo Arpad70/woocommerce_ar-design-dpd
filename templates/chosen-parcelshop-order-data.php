@@ -1,5 +1,7 @@
 <?php
 
+defined('ABSPATH') || exit;
+
 $type = isset($type) ? (string) $type : '';
 $parcelshop_id = isset($parcelshop_id) ? (string) $parcelshop_id : '';
 $parcelshop_pus_id = isset($parcelshop_pus_id) ? (string) $parcelshop_pus_id : '';

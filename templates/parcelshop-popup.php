@@ -1,6 +1,6 @@
 <?php
 
-use ArDesign\DPD\Shipping;
+defined('ABSPATH') || exit;
 
 $countries = isset($countries) ? (array) $countries : [];
 $base_country_code = isset($base_country_code) ? (string) $base_country_code : '';
@@ -55,5 +55,5 @@ $base_country_code = isset($base_country_code) ? (string) $base_country_code : '
 		</div>
 	</div>
 
-	<script id="<?php echo Shipping::FRAGMENTS_ELEMENT_ID; ?>"></script>
+	<script id="<?php echo \ArDesign\DPD\Shipping::FRAGMENTS_ELEMENT_ID; ?>"></script>
 </div>

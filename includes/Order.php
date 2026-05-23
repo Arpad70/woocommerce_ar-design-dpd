@@ -405,27 +405,7 @@ class Order
         }
 
         // Sanitize and save parcelshop data
-        $fields_to_save = [
-            DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY => 'intval',
-            DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY => 'sanitize_text_field',
-            DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY => 'sanitize_text_field',
-        ];
-
-        foreach ($fields_to_save as $meta_key => $sanitize_callback) {
-            $value = isset($posted_data[$meta_key]) ? $posted_data[$meta_key] : '';
-            $sanitized_value = $sanitize_callback($value);
-            $order->update_meta_data($meta_key, $sanitized_value);
-        }
+        self::persistParcelshopDataToOrder($order, $posted_data, false);
 
         $order->save_meta_data();
 
@@ -435,7 +415,7 @@ class Order
         }
     }
 
-    private static function getChosenParcelshopSessionData(): array
+    public static function getChosenParcelshopSessionData(): array
     {
         if (!WC()->session) {
             return [];
@@ -461,6 +441,80 @@ class Order
             DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY => $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_is_slovenska_posta_eligible'] ?? ''),
             DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY => $chosen_parcelshop[DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY] ?? ($chosen_parcelshop['ard_dpd_parcelshop_is_zbox_eligible'] ?? ''),
         ];
+    }
+
+    public static function getParcelshopFieldsToSave(): array
+    {
+        return [
+            DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY => 'intval',
+            DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_MAX_WEIGHT_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_COD_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_CARD_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_IS_ALZABOX_ELIGIBLE_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_IS_SLOVENSKA_POSTA_ELIGIBLE_META_KEY => 'sanitize_text_field',
+            DpdParcelShopShippingMethod::PARCELSHOP_IS_ZBOX_ELIGIBLE_META_KEY => 'sanitize_text_field',
+        ];
+    }
+
+    public static function sanitizeParcelshopData(array $parcelshop_data, bool $skip_empty = true): array
+    {
+        $sanitized_data = [];
+
+        foreach (self::getParcelshopFieldsToSave() as $meta_key => $sanitize_callback) {
+            if (!array_key_exists($meta_key, $parcelshop_data)) {
+                continue;
+            }
+
+            $sanitized_value = $sanitize_callback($parcelshop_data[$meta_key]);
+
+            if ($skip_empty && ($sanitized_value === '' || $sanitized_value === null)) {
+                continue;
+            }
+
+            $sanitized_data[$meta_key] = $sanitized_value;
+        }
+
+        return $sanitized_data;
+    }
+
+    public static function storeChosenParcelshopSessionData(array $parcelshop_data): void
+    {
+        if (!WC()->session) {
+            return;
+        }
+
+        $sanitized_data = self::sanitizeParcelshopData($parcelshop_data);
+        if ($sanitized_data === []) {
+            return;
+        }
+
+        WC()->session->set(Shipping::SESSION_CHOSEN_PARCELSHOP_KEY, $sanitized_data);
+    }
+
+    public static function persistParcelshopDataToOrder(\WC_Order $order, array $parcelshop_data, bool $skip_empty = true): void
+    {
+        $sanitized_data = self::sanitizeParcelshopData($parcelshop_data, $skip_empty);
+
+        foreach ($sanitized_data as $meta_key => $sanitized_value) {
+            $order->update_meta_data($meta_key, $sanitized_value);
+        }
+    }
+
+    public static function persistChosenParcelshopSessionData(\WC_Order $order): void
+    {
+        $chosenParcelshop = self::getChosenParcelshopSessionData();
+
+        if ($chosenParcelshop === []) {
+            return;
+        }
+
+        self::persistParcelshopDataToOrder($order, $chosenParcelshop);
     }
 
     private static function mergeChosenParcelshopSessionData(array $posted_data): array

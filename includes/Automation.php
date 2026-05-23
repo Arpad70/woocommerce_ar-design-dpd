@@ -45,7 +45,11 @@ class Automation
             }
         }
 
-        $order->update_meta_data(Shipment::DELIVERY_WORKFLOW_PROCESSED_AT_META_KEY, current_time('mysql'));
+        \ArDesign\DPD\Shipment::storeTimestampMeta(
+            $order,
+            \ArDesign\DPD\Shipment::DELIVERY_WORKFLOW_PROCESSED_AT_META_KEY,
+            \ArDesign\DPD\Shipment::DELIVERY_WORKFLOW_PROCESSED_AT_GMT_META_KEY
+        );
         $order->save_meta_data();
     }
 

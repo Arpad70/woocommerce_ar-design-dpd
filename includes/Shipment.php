@@ -20,12 +20,18 @@ class Shipment
     public const STATUS_META_KEY = '_ard_shipping_status';
     public const STATUS_LABEL_META_KEY = '_ard_shipping_status_label';
     public const CREATED_AT_META_KEY = '_ard_shipping_created_at';
+    public const CREATED_AT_GMT_META_KEY = '_ard_shipping_created_at_gmt';
     public const UPDATED_AT_META_KEY = '_ard_shipping_updated_at';
+    public const UPDATED_AT_GMT_META_KEY = '_ard_shipping_updated_at_gmt';
     public const PAYLOAD_META_KEY = '_ard_shipping_payload';
     public const HANDOVER_EMAIL_SENT_AT_META_KEY = '_ard_shipping_handover_email_sent_at';
+    public const HANDOVER_EMAIL_SENT_AT_GMT_META_KEY = '_ard_shipping_handover_email_sent_at_gmt';
     public const DELIVERED_AT_META_KEY = '_ard_shipping_delivered_at';
+    public const DELIVERED_AT_GMT_META_KEY = '_ard_shipping_delivered_at_gmt';
     public const DELIVERY_EMAIL_SENT_AT_META_KEY = '_ard_shipping_delivery_email_sent_at';
+    public const DELIVERY_EMAIL_SENT_AT_GMT_META_KEY = '_ard_shipping_delivery_email_sent_at_gmt';
     public const DELIVERY_WORKFLOW_PROCESSED_AT_META_KEY = '_ard_shipping_delivery_workflow_processed_at';
+    public const DELIVERY_WORKFLOW_PROCESSED_AT_GMT_META_KEY = '_ard_shipping_delivery_workflow_processed_at_gmt';
     public const INVOICE_FILE_META_KEY = '_ard_shipping_invoice_file';
 
     public static function init(): void
@@ -72,7 +78,7 @@ class Shipment
         $trackingNumber = self::getTrackingNumber($order, $response);
         $labelUrl = self::getLabelUrl($order, $response);
         $reference = self::getReference($order, $response);
-        $createdAt = current_time('mysql');
+        $createdAt = self::currentGmtMysql();
 
         return [
             'carrier' => self::CARRIER,
@@ -105,11 +111,21 @@ class Shipment
         $order->update_meta_data(self::LABEL_URL_META_KEY, (string) ($shipmentData['label_url'] ?? ''));
         $order->update_meta_data(self::STATUS_META_KEY, (string) ($shipmentData['status'] ?? ''));
         $order->update_meta_data(self::STATUS_LABEL_META_KEY, (string) ($shipmentData['status_label'] ?? ''));
-        $order->update_meta_data(self::UPDATED_AT_META_KEY, (string) ($shipmentData['updated_at'] ?? current_time('mysql')));
+        self::storeTimestampMeta(
+            $order,
+            self::UPDATED_AT_META_KEY,
+            self::UPDATED_AT_GMT_META_KEY,
+            (string) ($shipmentData['updated_at'] ?? self::currentGmtMysql())
+        );
         $order->update_meta_data(self::PAYLOAD_META_KEY, isset($shipmentData['payload']) && is_array($shipmentData['payload']) ? $shipmentData['payload'] : []);
 
-        if (!$order->get_meta(self::CREATED_AT_META_KEY, true)) {
-            $order->update_meta_data(self::CREATED_AT_META_KEY, (string) ($shipmentData['created_at'] ?? current_time('mysql')));
+        if (!self::hasStoredTimestamp($order, self::CREATED_AT_META_KEY, self::CREATED_AT_GMT_META_KEY)) {
+            self::storeTimestampMeta(
+                $order,
+                self::CREATED_AT_META_KEY,
+                self::CREATED_AT_GMT_META_KEY,
+                (string) ($shipmentData['created_at'] ?? self::currentGmtMysql())
+            );
         }
 
         if ($carrier === self::CARRIER && !empty($shipmentData['tracking_number'])) {
@@ -135,13 +151,13 @@ class Shipment
             'label_url' => (string) $order->get_meta(self::LABEL_URL_META_KEY, true),
             'status' => (string) $order->get_meta(self::STATUS_META_KEY, true),
             'status_label' => (string) $order->get_meta(self::STATUS_LABEL_META_KEY, true),
-            'created_at' => (string) $order->get_meta(self::CREATED_AT_META_KEY, true),
-            'updated_at' => (string) $order->get_meta(self::UPDATED_AT_META_KEY, true),
+            'created_at' => self::getPreferredTimestamp($order, self::CREATED_AT_GMT_META_KEY, self::CREATED_AT_META_KEY),
+            'updated_at' => self::getPreferredTimestamp($order, self::UPDATED_AT_GMT_META_KEY, self::UPDATED_AT_META_KEY),
             'payload' => (array) $order->get_meta(self::PAYLOAD_META_KEY, true),
-            'handover_email_sent_at' => (string) $order->get_meta(self::HANDOVER_EMAIL_SENT_AT_META_KEY, true),
-            'delivered_at' => (string) $order->get_meta(self::DELIVERED_AT_META_KEY, true),
-            'delivery_email_sent_at' => (string) $order->get_meta(self::DELIVERY_EMAIL_SENT_AT_META_KEY, true),
-            'delivery_workflow_processed_at' => (string) $order->get_meta(self::DELIVERY_WORKFLOW_PROCESSED_AT_META_KEY, true),
+            'handover_email_sent_at' => self::getPreferredTimestamp($order, self::HANDOVER_EMAIL_SENT_AT_GMT_META_KEY, self::HANDOVER_EMAIL_SENT_AT_META_KEY),
+            'delivered_at' => self::getPreferredTimestamp($order, self::DELIVERED_AT_GMT_META_KEY, self::DELIVERED_AT_META_KEY),
+            'delivery_email_sent_at' => self::getPreferredTimestamp($order, self::DELIVERY_EMAIL_SENT_AT_GMT_META_KEY, self::DELIVERY_EMAIL_SENT_AT_META_KEY),
+            'delivery_workflow_processed_at' => self::getPreferredTimestamp($order, self::DELIVERY_WORKFLOW_PROCESSED_AT_GMT_META_KEY, self::DELIVERY_WORKFLOW_PROCESSED_AT_META_KEY),
             'invoice_file' => (string) $order->get_meta(self::INVOICE_FILE_META_KEY, true),
         ];
     }
@@ -149,7 +165,7 @@ class Shipment
     public static function markDelivered(\WC_Order $order, array $shipmentData = []): array
     {
         $existingShipmentData = self::getShipmentData($order);
-        $deliveredAt = current_time('mysql');
+        $deliveredAt = self::currentGmtMysql();
         $shipmentData = array_merge($existingShipmentData, $shipmentData, [
             'carrier' => $existingShipmentData['carrier'] ?: self::CARRIER,
             'status' => 'delivered',
@@ -159,7 +175,7 @@ class Shipment
         ]);
 
         self::storeShipmentData($order, $shipmentData);
-        $order->update_meta_data(self::DELIVERED_AT_META_KEY, $deliveredAt);
+        self::storeTimestampMeta($order, self::DELIVERED_AT_META_KEY, self::DELIVERED_AT_GMT_META_KEY, $deliveredAt);
         $order->save_meta_data();
 
         do_action('ard_shipping_shipment_delivered', $order->get_id(), $shipmentData, $order);
@@ -249,5 +265,45 @@ class Shipment
         }
 
         return false;
+    }
+
+    public static function currentGmtMysql(): string
+    {
+        return current_time('mysql', true);
+    }
+
+    public static function storeTimestampMeta(\WC_Order $order, string $legacyKey, string $gmtKey, ?string $gmtValue = null): string
+    {
+        $gmtValue = trim((string) ($gmtValue ?? self::currentGmtMysql()));
+
+        if ($gmtValue === '') {
+            $gmtValue = self::currentGmtMysql();
+        }
+
+        $legacyValue = get_date_from_gmt($gmtValue, 'Y-m-d H:i:s');
+        if ($legacyValue === '') {
+            $legacyValue = current_time('mysql');
+        }
+
+        $order->update_meta_data($legacyKey, $legacyValue);
+        $order->update_meta_data($gmtKey, $gmtValue);
+
+        return $gmtValue;
+    }
+
+    public static function getPreferredTimestamp(\WC_Order $order, string $gmtKey, string $legacyKey): string
+    {
+        $gmtValue = trim((string) $order->get_meta($gmtKey, true));
+
+        if ($gmtValue !== '') {
+            return $gmtValue;
+        }
+
+        return trim((string) $order->get_meta($legacyKey, true));
+    }
+
+    private static function hasStoredTimestamp(\WC_Order $order, string $legacyKey, string $gmtKey): bool
+    {
+        return self::getPreferredTimestamp($order, $gmtKey, $legacyKey) !== '';
     }
 }

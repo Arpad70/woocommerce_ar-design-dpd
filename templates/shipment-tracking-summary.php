@@ -1,5 +1,7 @@
 <?php
 
+defined('ABSPATH') || exit;
+
 $type = isset($type) ? (string) $type : 'customer';
 $view = isset($view) && is_array($view) ? $view : [];
 

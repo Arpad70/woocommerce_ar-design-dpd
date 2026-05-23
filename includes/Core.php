@@ -39,7 +39,7 @@ class Core
      */
     public static function initTranslations()
     {
-        add_action('after_setup_theme', function () {
+        add_action('init', function () {
             load_plugin_textdomain(
                 AR_DESIGN_DPD_TEXT_DOMAIN,
                 false,

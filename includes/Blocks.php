@@ -9,6 +9,12 @@ defined('ABSPATH') || exit;
  */
 class Blocks
 {
+    private const STORE_API_EXTENSION_NAMESPACE = 'ar-design-dpd';
+    private const CHECKOUT_BLOCKS_REGISTRY_HOOKS = [
+        'woocommerce_blocks_cart_block_registration',
+        'woocommerce_blocks_checkout_block_registration',
+    ];
+
     public static function init()
     {
         // If WooCommerce Blocks is not active, do not proceed
@@ -16,11 +22,65 @@ class Blocks
             return;
         }
 
+        if (interface_exists('\Automattic\WooCommerce\Blocks\Integrations\IntegrationInterface')) {
+            foreach (self::CHECKOUT_BLOCKS_REGISTRY_HOOKS as $registry_hook) {
+                add_action($registry_hook, [__CLASS__, 'registerCheckoutBlocksIntegration']);
+            }
+        }
+
+        add_action('woocommerce_store_api_checkout_update_order_from_request', [__CLASS__, 'persistParcelShopOnStoreApi'], 5, 2);
         // Hook into Store API validation - this is the main validation for blocks checkout
         add_action('woocommerce_store_api_checkout_update_order_from_request', [__CLASS__, 'validateParcelShopOnStoreApi'], 10, 2);
 
         // Additional validation hook for checkout processing
         add_action('woocommerce_rest_checkout_process_payment_with_context', [__CLASS__, 'validateParcelShopBeforePayment'], 5, 2);
+    }
+
+    public static function registerCheckoutBlocksIntegration($integration_registry): void
+    {
+        if (!is_object($integration_registry) || !method_exists($integration_registry, 'register')) {
+            return;
+        }
+
+        if (!class_exists(__NAMESPACE__ . '\\BlocksIntegration') && defined('AR_DESIGN_DPD_PLUGIN_PATH')) {
+            require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'BlocksIntegration.php';
+        }
+
+        if (method_exists($integration_registry, 'is_registered') && $integration_registry->is_registered('ard_dpd_checkout_blocks')) {
+            return;
+        }
+
+        $integration_registry->register(new \ArDesign\DPD\BlocksIntegration());
+    }
+
+    public static function getCheckoutBlockScriptData(): array
+    {
+        return [
+            'ready' => true,
+            'extension_namespace' => self::STORE_API_EXTENSION_NAMESPACE,
+            'storage_key' => 'ard_dpd_chosen_parcelshop',
+            'template_html' => self::getTemplateContent(),
+            'field_keys' => array_keys(Order::getParcelshopFieldsToSave()),
+            'required_field_keys' => [
+                DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY,
+                DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY,
+            ],
+            'template_class' => 'dpd-parcelshop-container',
+            'template_selected_class' => 'is-selected',
+            'option_selector' => '.wc-block-components-radio-control__option',
+            'radio_selectors' => [
+                'input[type="radio"][id*="wc_dpd_parcelshop"]',
+                'input[type="radio"][id*="ard_dpd_parcelshop"]',
+                'input[type="radio"][value*="dpd_parcelshop"]',
+                'input[type="radio"][name*="dpd_parcelshop"]',
+            ],
+            'chosen_wrap_selector' => '.js-dpd-chosen-parcelshop-content',
+            'chosen_text_selector' => '.js-dpd-chosen-parcelshop-chosen-parcelshop-text',
+        ];
     }
 
     /**
@@ -31,7 +91,20 @@ class Blocks
      */
     public static function validateParcelShopOnStoreApi($order, $request)
     {
+        if ($order instanceof \WC_Order) {
+            self::captureParcelshopDataFromStoreApiRequest($order, $request);
+        }
+
         self::validateParcelShopSelection($order);
+    }
+
+    public static function persistParcelShopOnStoreApi($order, $request): void
+    {
+        if (!$order instanceof \WC_Order) {
+            return;
+        }
+
+        self::captureParcelshopDataFromStoreApiRequest($order, $request);
     }
 
     /**
@@ -46,8 +119,56 @@ class Blocks
         $order = $context_data['order'] ?? null;
 
         if ($order instanceof \WC_Order) {
+            self::captureParcelshopDataFromStoreApiRequest($order);
             self::validateParcelShopSelection($order);
         }
+    }
+
+    private static function captureParcelshopDataFromStoreApiRequest(\WC_Order $order, $request = null): void
+    {
+        $request_parcelshop_data = self::getParcelshopDataFromRequest($request);
+
+        if ($request_parcelshop_data !== []) {
+            \ArDesign\DPD\Order::storeChosenParcelshopSessionData($request_parcelshop_data);
+            \ArDesign\DPD\Order::persistParcelshopDataToOrder($order, $request_parcelshop_data);
+        }
+
+        \ArDesign\DPD\Order::persistChosenParcelshopSessionData($order);
+    }
+
+    private static function getParcelshopDataFromRequest($request): array
+    {
+        if (!$request instanceof \WP_REST_Request) {
+            return [];
+        }
+
+        $extensions = $request->get_param('extensions');
+        $extension_data = [];
+
+        if (is_array($extensions)) {
+            $extension_candidate = $extensions[self::STORE_API_EXTENSION_NAMESPACE] ?? null;
+            if (is_array($extension_candidate)) {
+                $extension_data = $extension_candidate;
+            }
+        }
+
+        $request_data = [];
+
+        foreach (array_keys(\ArDesign\DPD\Order::getParcelshopFieldsToSave()) as $field_key) {
+            $candidate = $request->get_param($field_key);
+
+            if (($candidate === null || $candidate === '') && array_key_exists($field_key, $extension_data)) {
+                $candidate = $extension_data[$field_key];
+            }
+
+            if ($candidate === null || $candidate === '') {
+                continue;
+            }
+
+            $request_data[$field_key] = $candidate;
+        }
+
+        return \ArDesign\DPD\Order::sanitizeParcelshopData($request_data);
     }
 
     /**
@@ -103,7 +224,7 @@ class Blocks
     }
 
     /**
-     * Get template content for JavaScript injection
+    * Get template content for JavaScript rendering
      *
      * @return string The HTML content for the parcelshop template
      */

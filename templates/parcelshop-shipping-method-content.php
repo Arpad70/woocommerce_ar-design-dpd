@@ -1,6 +1,5 @@
-
 <?php
-use ArDesign\DPD\DpdParcelShopShippingMethod;
+defined('ABSPATH') || exit;
 
 use function ArDesign\DPD\is_map_widget_enabled;
 
@@ -30,7 +29,7 @@ $disallow_sk_post = isset($disallow_sk_post) ? (bool) $disallow_sk_post : false;
 $disallow_alza_boxes = isset($disallow_alza_boxes) ? (bool) $disallow_alza_boxes : false;
 $disallow_zbox = isset($disallow_zbox) ? (bool) $disallow_zbox : false;
 ?>
-<div class="dpd-parcelshop-shipping-method-content">
+<div class="dpd-parcelshop-shipping-method-content" data-ard-dpd-ui="parcelshop-content">
 	<div class="dpd-parcelshop-shipping-method-content__open-btn-wrap">
 		<div class="dpd-parcelshop-shipping-method-content__logo">
 			<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 297.5 126.6" style="enable-background:new 0 0 297.5 126.6;" xml:space="preserve">
@@ -39,7 +38,7 @@ $disallow_zbox = isset($disallow_zbox) ? (bool) $disallow_zbox : false;
 			</svg>
 		</div>
 		<?php if (is_map_widget_enabled()): ?>
-			<button type="button" class="js-dpd-parcelshop-map-widget-open-popup-btn dpd-parcelshop-shipping-method-content__open-btn"
+			<button type="button" class="js-dpd-parcelshop-map-widget-open-popup-btn dpd-parcelshop-shipping-method-content__open-btn" data-ard-dpd-action="open-parcelshop-picker"
 				data-countries="<?php echo htmlspecialchars(json_encode($countries), ENT_QUOTES, 'UTF-8'); ?>"
 				data-allowed-countries="<?php echo htmlspecialchars(json_encode($allowed_countries), ENT_QUOTES, 'UTF-8'); ?>"
 				data-base-country-code="<?php echo $base_country_code; ?>"
@@ -58,17 +57,17 @@ $disallow_zbox = isset($disallow_zbox) ? (bool) $disallow_zbox : false;
 				data-disallow-zbox="<?php echo $disallow_zbox ? 'true' : 'false'; ?>"
 			><?php echo __('Choose parcelshop', 'ar-design-dpd'); ?></button>
 		<?php else: ?>
-			<button type="button" class="js-dpd-parcelshop-open-popup-btn dpd-parcelshop-shipping-method-content__open-btn"><?php echo __('Choose parcelshop', 'ar-design-dpd'); ?></button>
+			<button type="button" class="js-dpd-parcelshop-open-popup-btn dpd-parcelshop-shipping-method-content__open-btn" data-ard-dpd-action="open-parcelshop-picker"><?php echo __('Choose parcelshop', 'ar-design-dpd'); ?></button>
 		<?php endif; ?>
 	</div>
-	<div class="js-dpd-chosen-parcelshop-content dpd-parcelshop-shipping-method-content__chosen-parcelshop-wrap <?php echo $chosen_parcelshop_text ? 'active' : ''; ?>">
-		<p class="dpd-parcelshop-shipping-method-content__chosen-parcelshop"><?php echo __('Selected parcelshop', 'ar-design-dpd'); ?>: <strong class="js-dpd-chosen-parcelshop-chosen-parcelshop-text"><?php echo $chosen_parcelshop_text; ?></strong></p>
+	<div class="js-dpd-chosen-parcelshop-content dpd-parcelshop-shipping-method-content__chosen-parcelshop-wrap <?php echo $chosen_parcelshop_text ? 'active' : ''; ?>" data-ard-dpd-ui="chosen-parcelshop" aria-live="polite">
+		<p class="dpd-parcelshop-shipping-method-content__chosen-parcelshop"><?php echo __('Selected parcelshop', 'ar-design-dpd'); ?>: <strong class="js-dpd-chosen-parcelshop-chosen-parcelshop-text" data-ard-dpd-ui="chosen-parcelshop-text"><?php echo $chosen_parcelshop_text; ?></strong></p>
 	</div>
-	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-id" value="<?php echo esc_attr($chosen_parcelshop_id); ?>">
-	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-pus-id" value="<?php echo esc_attr($chosen_parcelshop_pus_id); ?>">
-	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-name" value="<?php echo esc_attr($chosen_parcelshop_name); ?>">
-	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-street" value="<?php echo esc_attr($chosen_parcelshop_street); ?>">
-	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-city" value="<?php echo esc_attr($chosen_parcelshop_city); ?>">
-	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-zip" value="<?php echo esc_attr($chosen_parcelshop_zip); ?>">
-	<input type="hidden" name="<?php echo DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-country-code" value="<?php echo esc_attr($chosen_parcelshop_country_code); ?>">
+	<input type="hidden" name="<?php echo \ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-id" data-ard-dpd-field="<?php echo esc_attr(\ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_ID_META_KEY); ?>" value="<?php echo esc_attr($chosen_parcelshop_id); ?>">
+	<input type="hidden" name="<?php echo \ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-pus-id" data-ard-dpd-field="<?php echo esc_attr(\ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_PUS_ID_META_KEY); ?>" value="<?php echo esc_attr($chosen_parcelshop_pus_id); ?>">
+	<input type="hidden" name="<?php echo \ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-name" data-ard-dpd-field="<?php echo esc_attr(\ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_NAME_META_KEY); ?>" value="<?php echo esc_attr($chosen_parcelshop_name); ?>">
+	<input type="hidden" name="<?php echo \ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-street" data-ard-dpd-field="<?php echo esc_attr(\ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_STREET_META_KEY); ?>" value="<?php echo esc_attr($chosen_parcelshop_street); ?>">
+	<input type="hidden" name="<?php echo \ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-city" data-ard-dpd-field="<?php echo esc_attr(\ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_CITY_META_KEY); ?>" value="<?php echo esc_attr($chosen_parcelshop_city); ?>">
+	<input type="hidden" name="<?php echo \ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-zip" data-ard-dpd-field="<?php echo esc_attr(\ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_ZIP_META_KEY); ?>" value="<?php echo esc_attr($chosen_parcelshop_zip); ?>">
+	<input type="hidden" name="<?php echo \ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY; ?>" class="js-dpd-parcelshop-hidden-parcelshop-country-code" data-ard-dpd-field="<?php echo esc_attr(\ArDesign\DPD\DpdParcelShopShippingMethod::PARCELSHOP_COUNTRY_CODE_META_KEY); ?>" value="<?php echo esc_attr($chosen_parcelshop_country_code); ?>">
 </div>

@@ -1,5 +1,7 @@
 <?php
 
+defined('ABSPATH') || exit;
+
 $api_key = isset($api_key) ? (string) $api_key : '';
 $language = isset($language) ? (string) $language : 'sk';
 

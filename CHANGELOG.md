@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.6.12 - 2026-05-21
+- Added a self-healing legacy translation alias bootstrap that recreates missing `wc-dpd-<locale>` language files from the bundled AR Design translations when the global WordPress language directory is incomplete.
+- Prevented repeated PHP warnings about missing `wp-content/languages/plugins/wc-dpd-*.l10n.php` on environments that still probe the historical `wc-dpd` text domain alias.
+
 ## 8.6.11 - 2026-05-21
 - Centralized DPD workflow status registration on the shared AR Design workflow catalog so carrier plugins no longer keep drifting status slug copies.
 - Removed duplicate `manual-review` ownership from the DPD workflow layer while preserving DPD-driven transitions for `na-odoslanie`, `v-preprave`, and `vratka`.

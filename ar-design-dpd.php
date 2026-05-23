@@ -3,7 +3,7 @@
 /*
  * Plugin Name: AR Design DPD for WooCommerce
  * Description: Samostatný DPD modul pre WooCommerce spravovaný Arpád Horák. Fork vychádza z pôvodnej integrácie Webikon, ktorá zostáva uvedená ako coworker foundation projektu.
- * Version: 8.6.11
+ * Version: 8.6.12
  * Author: Arpád Horák
  * Author URI: https://arpad-horak.cz
  * Update URI: https://github.com/Arpad70/woocommerce_ar-design-dpd
@@ -34,7 +34,7 @@ define('AR_DESIGN_DPD_PLUGIN_INDEX', __FILE__);
 define('AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION', '7.0');
 define('AR_DESIGN_DPD_PLUGIN_ASSETS_URL', plugins_url(AR_DESIGN_DPD_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR));
 define('AR_DESIGN_DPD_PLUGIN_TEMPLATES_PATH', AR_DESIGN_DPD_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR);
-define('AR_DESIGN_DPD_VERSION', '8.6.11');
+define('AR_DESIGN_DPD_VERSION', '8.6.12');
 define('AR_DESIGN_DPD_BASENAME', plugin_basename(__FILE__));
 define('AR_DESIGN_DPD_REPOSITORY', 'Arpad70/woocommerce_ar-design-dpd');
 define('AR_DESIGN_DPD_TEXT_DOMAIN', 'ar-design-dpd');
@@ -54,11 +54,71 @@ foreach ($legacy_constants as $legacy_constant_name => $legacy_constant_value) {
     }
 }
 
+function ard_dpd_ensure_legacy_language_aliases(): void
+{
+    if (!defined('WP_LANG_DIR')) {
+        return;
+    }
+
+    $locale = function_exists('determine_locale') ? (string) determine_locale() : (string) get_locale();
+    if ('' === $locale) {
+        return;
+    }
+
+    $target_dir = WP_LANG_DIR . DIRECTORY_SEPARATOR . 'plugins';
+    if (!is_dir($target_dir)) {
+        if (!function_exists('wp_mkdir_p') || !wp_mkdir_p($target_dir)) {
+            return;
+        }
+    }
+
+    $legacy_prefix = $target_dir . DIRECTORY_SEPARATOR . 'wc-dpd-' . $locale;
+    $source_prefix = AR_DESIGN_DPD_PLUGIN_PATH . 'languages' . DIRECTORY_SEPARATOR . 'ar-design-dpd-' . $locale;
+
+    foreach (['mo', 'po'] as $extension) {
+        $target_file = $legacy_prefix . '.' . $extension;
+        $source_file = $source_prefix . '.' . $extension;
+
+        if (file_exists($target_file) || !file_exists($source_file)) {
+            continue;
+        }
+
+        @copy($source_file, $target_file);
+    }
+
+    $l10n_php_file = $legacy_prefix . '.l10n.php';
+    if (file_exists($l10n_php_file)) {
+        return;
+    }
+
+    $stub = <<<'PHP'
+<?php
+return [
+	'domain' => 'wc-dpd',
+	'plural-forms' => 'nplurals=2; plural=n != 1;',
+	'language' => '',
+	'messages' => [],
+];
+PHP;
+
+    $stub = str_replace("'language' => ''", "'language' => '" . addslashes(substr($locale, 0, 2)) . "'", $stub);
+    @file_put_contents($l10n_php_file, $stub);
+}
+
+ard_dpd_ensure_legacy_language_aliases();
+
 require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'Updater.php';
 require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'RollbackManager.php';
 require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'EnergySurcharge.php';
 require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'EnergySurchargeMonitor.php';
 require_once AR_DESIGN_DPD_PLUGIN_PATH . 'includes' . DIRECTORY_SEPARATOR . 'OrderWorkflow.php';
+
+$composer_autoloader = AR_DESIGN_DPD_PLUGIN_PATH . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+if (file_exists($composer_autoloader)) {
+    require_once $composer_autoloader;
+
+    Core::initTranslations();
+}
 
 if (class_exists(__NAMESPACE__ . '\\ArDesignDpdUpdater') && !class_exists('WcDPD\\ArDesignDpdUpdater', false)) {
     class_alias(__NAMESPACE__ . '\\ArDesignDpdUpdater', 'WcDPD\\ArDesignDpdUpdater');
@@ -127,22 +187,18 @@ add_action('admin_notices', function () {
 /**
  * Autoload plugin files
  */
-add_action('plugins_loaded', function () {
-    // Check that the composer autoloader is present
-    $composer_autoloader = AR_DESIGN_DPD_PLUGIN_PATH . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
-    if (!file_exists($composer_autoloader)) {
+function ard_dpd_bootstrap_woo_runtime(): void
+{
+    $composerAutoloader = AR_DESIGN_DPD_PLUGIN_PATH . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+    if (!file_exists($composerAutoloader)) {
         return;
     }
-
-    require_once $composer_autoloader;
 
     ard_dpd_register_legacy_class_aliases();
 
     if (!\ArDesign\DPD\is_woocommerce_active()) {
         return; // WooCommerce is not active, so exit early
     }
-
-    \ArDesign\DPD\Core::initTranslations();
 
     // Compare the installed WooCommerce version with the required version
     if (!class_exists('WooCommerce') || version_compare(WC()->version, AR_DESIGN_DPD_PLUGIN_WC_MIN_VERSION, '<')) {
@@ -151,7 +207,9 @@ add_action('plugins_loaded', function () {
 
     // Initialize the plugin
     \ArDesign\DPD\Core::init();
-});
+}
+
+add_action('woocommerce_loaded', __NAMESPACE__ . '\\ard_dpd_bootstrap_woo_runtime', 20);
 
 $ar_design_dpd_updater = new \ArDesign\DPD\ArDesignDpdUpdater(
     AR_DESIGN_DPD_REPOSITORY,

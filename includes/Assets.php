@@ -12,11 +12,6 @@ class Assets
     public static function init()
     {
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueueScripts']);
-
-        // Add the template content to the footer if WooCommerce Blocks is enabled
-        if (is_woocommerce_blocks_enabled()) {
-            add_action('wp_footer', [__CLASS__, 'addTemplateToFooter']);
-        }
     }
 
     /**
@@ -67,31 +62,5 @@ class Assets
             ]);
         }
 
-        // Is WooCommerce Blocks enabled?
-        if (is_woocommerce_blocks_enabled()) {
-            wp_enqueue_script('ard_dpd_parcelshop_block_shipping_method_scripts', AR_DESIGN_DPD_PLUGIN_ASSETS_URL . 'scripts/dpd-parcelshop-block-shipping-method.js', [], ard_dpd_get_plugin_version(), true);
-            wp_enqueue_style('ard_dpd_parcelshop_block_shipping_method_styles', AR_DESIGN_DPD_PLUGIN_ASSETS_URL . 'styles/dpd-parcelshop-block-shipping-method.css', [], ard_dpd_get_plugin_version(), 'all');
-
-            // Just pass a flag to indicate the script should run
-            wp_localize_script('ard_dpd_parcelshop_block_shipping_method_scripts', 'ard_dpd_parcelshop_block_settings', [
-                'ready' => true
-            ]);
-        }
-    }
-
-    /**
-     * Add template content to footer
-     */
-    public static function addTemplateToFooter()
-    {
-        if (!is_cart_or_checkout_page()) {
-            return;
-        }
-
-        ?>
-        <div id="dpd-template-source" style="display:none;">
-            <?php echo Blocks::getTemplateContent(); ?>
-        </div>
-        <?php
     }
 }

@@ -2,7 +2,7 @@
 
 namespace ArDesign\DPD;
 
-use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
+use Automattic\WooCommerce\Utilities\OrderUtil;
 
 defined('ABSPATH') || exit;
 
@@ -47,7 +47,7 @@ class OrderMetabox
 
     public static function addMetabox()
     {
-        $screen = class_exists(CustomOrdersTableController::class) && wc_get_container()->get(CustomOrdersTableController::class)->custom_orders_table_usage_is_enabled()
+        $screen = class_exists(OrderUtil::class) && method_exists(OrderUtil::class, 'custom_orders_table_usage_is_enabled') && OrderUtil::custom_orders_table_usage_is_enabled()
                 ? \wc_get_page_screen_id('shop-order')
                 : 'shop_order';
 
@@ -460,8 +460,9 @@ class OrderMetabox
     {
         if (
             $order_id > 0
-            && class_exists(CustomOrdersTableController::class)
-            && wc_get_container()->get(CustomOrdersTableController::class)->custom_orders_table_usage_is_enabled()
+            && class_exists(OrderUtil::class)
+            && method_exists(OrderUtil::class, 'custom_orders_table_usage_is_enabled')
+            && OrderUtil::custom_orders_table_usage_is_enabled()
         ) {
             return admin_url('admin.php?page=wc-orders&action=edit&id=' . $order_id);
         }

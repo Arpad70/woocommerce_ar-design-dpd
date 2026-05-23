@@ -1,10 +1,13 @@
 .dpd-parcelshop-container {
   display: none;
+  width: 100%;
+  margin-top: 12px;
 }
-.dpd-parcelshop-container.active {
+.dpd-parcelshop-container.active,
+.dpd-parcelshop-container.is-selected {
   display: block;
 }
-input[id*=wc_dpd_parcelshop]:checked ~ .wc-block-components-radio-control__option-layout .dpd-parcelshop-container,
-input[id*=ard_dpd_parcelshop]:checked ~ .wc-block-components-radio-control__option-layout .dpd-parcelshop-container {
+
+.dpd-parcelshop-container[data-ard-dpd-selected="true"] {
   display: block;
 }
