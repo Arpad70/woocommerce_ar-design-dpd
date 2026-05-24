@@ -4,7 +4,7 @@ Tags: shipping, woocommerce, dpd
 Requires at least: 5.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.6.13
+Stable tag: 8.6.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,9 @@ Pre ďalší vývoj v repozitári pozrite aj dokumenty **DEVELOPER_GUIDE.md** a 
 4. Zobrazenie možnosti exportu do DPD v detaile WooCommerce produktu
 
 == Changelog ==
+
+= 8.6.14 =
+* Fixed DPD STATUSDATA tracking so semantically weaker scans like `18 = Additional shipment information` no longer overwrite a more important current state such as `13 = Delivered` in the order tracking summary.
 
 = 8.6.13 =
 * Fixed legacy DPD Pickup / Pickup Station exports for orders missing both numeric `parcelshop_id` and `pus_id` by re-matching the pickup point from DPD API address metadata.

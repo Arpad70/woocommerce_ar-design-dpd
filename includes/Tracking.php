@@ -788,22 +788,41 @@ class Tracking
             return strcmp((string) ($left['EVENT_DATE_TIME'] ?? ''), (string) ($right['EVENT_DATE_TIME'] ?? ''));
         });
 
+        $normalizedRows = [];
         $events = [];
         $currentEvent = [];
-        $latestRow = [];
-        $totalRows = count($rows);
+        $currentRow = [];
 
-        foreach ($rows as $index => $row) {
-            $normalizedEvent = self::normalizeStatusDataRowToEvent($row, $index === ($totalRows - 1));
+        foreach ($rows as $row) {
+            $normalizedEvent = self::normalizeStatusDataRowToEvent($row);
             if ($normalizedEvent === []) {
                 continue;
             }
 
+            $normalizedRows[] = [
+                'row' => $row,
+                'event' => $normalizedEvent,
+            ];
+        }
+
+        $currentIndex = self::getCurrentStatusDataEventIndex(array_map(static function ($item) {
+            return isset($item['event']) && is_array($item['event']) ? $item['event'] : [];
+        }, $normalizedRows));
+
+        foreach ($normalizedRows as $index => $item) {
+            $normalizedEvent = isset($item['event']) && is_array($item['event']) ? $item['event'] : [];
+            $row = isset($item['row']) && is_array($item['row']) ? $item['row'] : [];
+
+            if ($normalizedEvent === []) {
+                continue;
+            }
+
+            $normalizedEvent['current'] = $currentIndex !== null && $index === $currentIndex;
             $events[] = $normalizedEvent;
 
             if (!empty($normalizedEvent['current'])) {
                 $currentEvent = $normalizedEvent;
-                $latestRow = $row;
+                $currentRow = $row;
             }
         }
 
@@ -820,20 +839,20 @@ class Tracking
             'events' => $events,
             'source' => 'statusdata',
             'file' => wp_basename($filePath),
-            'tracking_number' => (string) ($latestRow['PARCELNO'] ?? ''),
-            'latest_scan_code' => (string) ($latestRow['SCAN_CODE'] ?? ''),
-            'latest_service_code' => (string) ($latestRow['SERVICE'] ?? ''),
+            'tracking_number' => (string) ($currentRow['PARCELNO'] ?? ''),
+            'latest_scan_code' => (string) ($currentRow['SCAN_CODE'] ?? ''),
+            'latest_service_code' => (string) ($currentRow['SERVICE'] ?? ''),
             'latest_additional_codes' => array_values(array_filter([
-                (string) ($latestRow['ADD_SERVICE_1'] ?? ''),
-                (string) ($latestRow['ADD_SERVICE_2'] ?? ''),
-                (string) ($latestRow['ADD_SERVICE_3'] ?? ''),
+                (string) ($currentRow['ADD_SERVICE_1'] ?? ''),
+                (string) ($currentRow['ADD_SERVICE_2'] ?? ''),
+                (string) ($currentRow['ADD_SERVICE_3'] ?? ''),
             ])),
-            'latest_raw_record' => $latestRow,
+            'latest_raw_record' => $currentRow,
             'existing_summary' => self::getCurrentTrackingSummary($order),
         ];
     }
 
-    private static function normalizeStatusDataRowToEvent(array $row, bool $isCurrent = false): array
+    private static function normalizeStatusDataRowToEvent(array $row): array
     {
         $scanCode = sanitize_text_field((string) ($row['SCAN_CODE'] ?? ''));
         $parcelNumber = sanitize_text_field((string) ($row['PARCELNO'] ?? ''));
@@ -852,13 +871,63 @@ class Tracking
             'description' => (string) ($mappedStatus['description'] ?? ''),
             'date' => $eventDate ?: current_time('mysql'),
             'location' => $location,
-            'current' => $isCurrent,
+            'current' => false,
             'reached' => true,
             'source' => 'statusdata',
             'raw_scan_code' => $scanCode,
             'raw_service_code' => sanitize_text_field((string) ($row['SERVICE'] ?? '')),
             'raw_tracking_number' => $parcelNumber,
         ];
+    }
+
+    private static function getCurrentStatusDataEventIndex(array $events): ?int
+    {
+        $currentIndex = null;
+        $currentEvent = null;
+
+        foreach ($events as $index => $event) {
+            if (!is_array($event) || $event === []) {
+                continue;
+            }
+
+            if ($currentEvent === null || self::compareStatusDataCurrentEvent($currentEvent, $event) < 0) {
+                $currentEvent = $event;
+                $currentIndex = $index;
+            }
+        }
+
+        return $currentIndex;
+    }
+
+    private static function compareStatusDataCurrentEvent(array $left, array $right): int
+    {
+        $leftPriority = self::getStatusDataEventPriority((string) ($left['status'] ?? ''));
+        $rightPriority = self::getStatusDataEventPriority((string) ($right['status'] ?? ''));
+
+        if ($leftPriority !== $rightPriority) {
+            return $leftPriority <=> $rightPriority;
+        }
+
+        return strcmp((string) ($left['date'] ?? ''), (string) ($right['date'] ?? ''));
+    }
+
+    private static function getStatusDataEventPriority(string $status): int
+    {
+        $priorities = [
+            'courier_returned' => 100,
+            'returning_to_sender' => 90,
+            'delivered' => 80,
+            'ready_for_pickup' => 78,
+            'delivery_attempt_failed' => 75,
+            'out_for_delivery' => 70,
+            'customs_clearance' => 65,
+            'in_transit' => 60,
+            'picked_up' => 50,
+            'additional_information' => 20,
+            'exported' => 10,
+        ];
+
+        return isset($priorities[$status]) ? (int) $priorities[$status] : 0;
     }
 
     private static function mapStatusDataStatus(array $row): array

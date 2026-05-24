@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.6.14 - 2026-05-24
+- Fixed DPD STATUSDATA current-status selection so the tracking snapshot no longer blindly uses the last imported scan row when a semantically less important scan (for example `18 = Additional shipment information`) arrives after a more important terminal status like `13 = Delivered`.
+- Current DPD tracking meta now persists the scan code, service code and raw record of the selected current event, keeping the admin/customer tracking summary aligned with the real shipment state.
+
 ## 8.6.13 - 2026-05-23
 - Fixed DPD Pickup / Pickup Station export fallback for legacy orders that were missing both numeric `parcelshop_id` and `pus_id`: parcelshop identity can now be re-matched from DPD API using stored address metadata.
 - Added a broader `Repair ParcelShop data` admin action so production operators can refresh parcelshop identity metadata (and COD capability metadata for COD orders) before re-running export.
