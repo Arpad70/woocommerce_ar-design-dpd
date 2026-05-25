@@ -13,6 +13,7 @@ class Email
     {
         add_action('woocommerce_email_after_order_table', [__CLASS__, 'displayParcelShopShippingInfo'], 10, 1);
         add_filter('woocommerce_email_classes', [__CLASS__, 'registerEmailClasses']);
+        add_action('yaymail_register_emails', [__CLASS__, 'registerYayMailEmails']);
     }
 
     public static function registerEmailClasses($emails)
@@ -21,6 +22,24 @@ class Email
         $emails[\ArDesign\DPD\ShipmentDeliveredEmail::class] = new \ArDesign\DPD\ShipmentDeliveredEmail();
 
         return $emails;
+    }
+
+    public static function registerYayMailEmails($yaymailEmails): void
+    {
+        if (!class_exists('\YayMail\YayMailEmails')) {
+            return;
+        }
+
+        if (!$yaymailEmails instanceof \YayMail\YayMailEmails) {
+            return;
+        }
+
+        $yaymailEmailClass = __NAMESPACE__ . '\\YayMailShipmentCreatedEmail';
+        if (!class_exists($yaymailEmailClass)) {
+            return;
+        }
+
+        $yaymailEmails->register($yaymailEmailClass::get_instance());
     }
 
     /**

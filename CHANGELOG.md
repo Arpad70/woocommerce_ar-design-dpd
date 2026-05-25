@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.6.15 - 2026-05-25
+- Added YayMail registration for the shared `ard_shipping_shipment_created` customer email so the shipment-created template is editable in YayMail even when the workflow is triggered from the split carrier stack.
+- Added the dedicated `YayMailShipmentCreatedEmail` wrapper with shipment/tracking shortcodes reused by the shared DPD/GLS shipment-created email flow.
+
 ## 8.6.14 - 2026-05-24
 - Fixed DPD STATUSDATA current-status selection so the tracking snapshot no longer blindly uses the last imported scan row when a semantically less important scan (for example `18 = Additional shipment information`) arrives after a more important terminal status like `13 = Delivered`.
 - Current DPD tracking meta now persists the scan code, service code and raw record of the selected current event, keeping the admin/customer tracking summary aligned with the real shipment state.
