@@ -180,6 +180,7 @@ final class ArDesignDpdUpdater
     private function extractZipAssetUrl(array $releaseData): string
     {
         $assets = isset($releaseData['assets']) && is_array($releaseData['assets']) ? $releaseData['assets'] : array();
+        $versionedFallback = '';
 
         foreach ($assets as $asset) {
             if (! is_array($asset)) {
@@ -188,17 +189,22 @@ final class ArDesignDpdUpdater
 
             $name = isset($asset['name']) ? (string) $asset['name'] : '';
             $url = isset($asset['browser_download_url']) ? (string) $asset['browser_download_url'] : '';
+            $normalizedName = strtolower($name);
 
-            if ('' === $url || ! str_ends_with(strtolower($name), '.zip')) {
+            if ('' === $url || '.zip' !== substr($normalizedName, -4)) {
                 continue;
             }
 
-            if ('ar-design-dpd.zip' === strtolower($name)) {
+            if ('ar-design-dpd.zip' === $normalizedName) {
                 return $url;
+            }
+
+            if (0 === strpos($normalizedName, 'ar-design-dpd-')) {
+                $versionedFallback = $url;
             }
         }
 
-        return '';
+        return $versionedFallback;
     }
 
     private function getCacheKey(): string

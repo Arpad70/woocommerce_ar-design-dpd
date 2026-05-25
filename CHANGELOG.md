@@ -1,5 +1,8 @@
 # Changelog
 
+## 8.6.16 - 2026-05-25
+- Updated the GitHub updater to accept both the historical `ar-design-dpd.zip` asset name and versioned release assets such as `ar-design-dpd-8.6.16.zip`, so WordPress can detect updates from the current release workflow again.
+
 ## 8.6.15 - 2026-05-25
 - Added YayMail registration for the shared `ard_shipping_shipment_created` customer email so the shipment-created template is editable in YayMail even when the workflow is triggered from the split carrier stack.
 - Added the dedicated `YayMailShipmentCreatedEmail` wrapper with shipment/tracking shortcodes reused by the shared DPD/GLS shipment-created email flow.
