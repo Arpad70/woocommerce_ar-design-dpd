@@ -215,7 +215,7 @@ class YayMailShipmentCreatedEmail extends BaseEmail
 
     private function getDefaultIntroText(): string
     {
-        return __('Your package has been created in our shipping system and the tracking number is now available. You can follow the shipment progress using the link below.', 'ar-design-dpd');
+        return __('Vaša zásielka bola vytvorená v našom prepravnom systéme a sledovacie číslo je už k dispozícii. Pohyb zásielky môžete sledovať pomocou odkazu nižšie.', 'ar-design-dpd');
     }
 
     private function findRootEmail(): ?ShipmentCreatedEmail
