@@ -2,6 +2,7 @@
 
 ## 8.6.17 - 2026-05-25
 - Translated the default shipment handover intro text used by the WooCommerce email and the YayMail shortcode `[ard_dpd_shipment_intro_text]` to Slovak, so unsaved/default email content no longer falls back to English.
+- Added YayMail support for the delivered follow-up email `ard_dpd_shipment_delivered`, including a dedicated YayMail wrapper and template so both shipment-created and shipment-delivered customer emails stay editable inside YayMail.
 
 ## 8.6.16 - 2026-05-25
 - Updated the GitHub updater to accept both the historical `ar-design-dpd.zip` asset name and versioned release assets such as `ar-design-dpd-8.6.16.zip`, so WordPress can detect updates from the current release workflow again.

@@ -1240,13 +1240,6 @@ class Tracking
 
         $shipmentData = Shipment::markDelivered($order, self::buildShipmentDataFromTracking($order, $trackingData, true));
 
-        $settings = DpdExportSettings::getDefaultSettings();
-        if (!empty($settings[DpdExportSettings::TRACKING_AUTO_COMPLETE_ORDER_OPTION_KEY]) && $settings[DpdExportSettings::TRACKING_AUTO_COMPLETE_ORDER_OPTION_KEY] === 'yes' && !$order->has_status(['completed', 'cancelled', 'refunded'])) {
-            $order->update_status('completed', __('DPD delivery status confirmed successful delivery.', 'ar-design-dpd'));
-        } else {
-            $order->add_order_note(__('DPD delivery status confirmed successful delivery.', 'ar-design-dpd'));
-        }
-
         do_action('ard_dpd_shipment_delivered_notification', $order->get_id(), $trackingData, $shipmentData, $order);
     }
 

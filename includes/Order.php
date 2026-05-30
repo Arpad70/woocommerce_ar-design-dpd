@@ -1030,7 +1030,7 @@ class Order
         return sanitize_text_field((string) $value);
     }
 
-    private static function normalizeParcelshopComparableString($value): string
+    private static function normalizeParcelshopComparableString(mixed $value): string
     {
         if (is_array($value)) {
             $value = $value['code'] ?? ($value['value'] ?? '');
@@ -1051,7 +1051,7 @@ class Order
         return trim((string) $normalized);
     }
 
-    private static function normalizeParcelshopComparableZip($value): string
+    private static function normalizeParcelshopComparableZip(mixed $value): string
     {
         $normalized = sanitize_text_field((string) $value);
         if ($normalized === '') {
@@ -1061,7 +1061,7 @@ class Order
         return preg_replace('/\s+/', '', $normalized) ?: '';
     }
 
-    private static function hasValidParcelshopNumericId($value): bool
+    private static function hasValidParcelshopNumericId(mixed $value): bool
     {
         $value = trim((string) $value);
 

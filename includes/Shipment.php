@@ -9,6 +9,10 @@ defined('ABSPATH') || exit;
  */
 class Shipment
 {
+    private const SHIPMENT_CREATED_EVENT = 'ard_shipping_shipment_created';
+    private const SHIPMENT_UPDATED_EVENT = 'ard_shipping_shipment_updated';
+    private const SHIPMENT_DELIVERED_EVENT = 'ard_shipping_shipment_delivered';
+
     public const CARRIER = 'dpd';
     public const DPD_TRACKING_BASE_URL = 'https://www.dpd.com/sk/sk/cakam-balik/sledovanie-balikov/';
     public const CARRIER_META_KEY = '_ard_shipping_carrier';
@@ -61,7 +65,7 @@ class Shipment
          * @param array     $shipmentData
          * @param \WC_Order $order
          */
-        do_action('ard_shipping_shipment_created', $order->get_id(), $shipmentData, $order);
+        do_action(self::getShipmentCreatedEventName(), $order->get_id(), $shipmentData, $order);
 
         /**
          * Fires when normalized shipment data is updated for an order.
@@ -70,7 +74,7 @@ class Shipment
          * @param array     $shipmentData
          * @param \WC_Order $order
          */
-        do_action('ard_shipping_shipment_updated', $order->get_id(), $shipmentData, $order);
+        do_action(self::getShipmentUpdatedEventName(), $order->get_id(), $shipmentData, $order);
     }
 
     public static function buildShipmentDataFromExport(\WC_Order $order, array $response = []): array
@@ -178,7 +182,7 @@ class Shipment
         self::storeTimestampMeta($order, self::DELIVERED_AT_META_KEY, self::DELIVERED_AT_GMT_META_KEY, $deliveredAt);
         $order->save_meta_data();
 
-        do_action('ard_shipping_shipment_delivered', $order->get_id(), $shipmentData, $order);
+        do_action(self::getShipmentDeliveredEventName(), $order->get_id(), $shipmentData, $order);
 
         return $shipmentData;
     }
@@ -305,5 +309,26 @@ class Shipment
     private static function hasStoredTimestamp(\WC_Order $order, string $legacyKey, string $gmtKey): bool
     {
         return self::getPreferredTimestamp($order, $gmtKey, $legacyKey) !== '';
+    }
+
+    private static function getShipmentCreatedEventName(): string
+    {
+        return defined('ARD_WORKFLOW_EVENT_SHIPMENT_CREATED')
+            ? (string) ARD_WORKFLOW_EVENT_SHIPMENT_CREATED
+            : self::SHIPMENT_CREATED_EVENT;
+    }
+
+    private static function getShipmentUpdatedEventName(): string
+    {
+        return defined('ARD_WORKFLOW_EVENT_SHIPMENT_UPDATED')
+            ? (string) ARD_WORKFLOW_EVENT_SHIPMENT_UPDATED
+            : self::SHIPMENT_UPDATED_EVENT;
+    }
+
+    private static function getShipmentDeliveredEventName(): string
+    {
+        return defined('ARD_WORKFLOW_EVENT_SHIPMENT_DELIVERED')
+            ? (string) ARD_WORKFLOW_EVENT_SHIPMENT_DELIVERED
+            : self::SHIPMENT_DELIVERED_EVENT;
     }
 }

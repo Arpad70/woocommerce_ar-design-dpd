@@ -102,7 +102,7 @@ class YayMailShipmentCreatedEmail extends BaseEmail
         return yaymail_get_template('templates/yaymail/customer-shipment-created.php', '', AR_DESIGN_DPD_PLUGIN_PATH);
     }
 
-    public function registerEmailShortcodes($email): void
+    public function registerEmailShortcodes(mixed $email): void
     {
         if (!is_object($email) || !method_exists($email, 'register_shortcodes')) {
             return;
@@ -145,7 +145,7 @@ class YayMailShipmentCreatedEmail extends BaseEmail
         ]);
     }
 
-    public function shortcodeIntroText($data): string
+    public function shortcodeIntroText(mixed $data): string
     {
         if ($this->isSampleRender($data)) {
             return esc_html($this->getDefaultIntroText());
@@ -159,7 +159,7 @@ class YayMailShipmentCreatedEmail extends BaseEmail
         return esc_html($this->getDefaultIntroText());
     }
 
-    public function shortcodeCarrier($data): string
+    public function shortcodeCarrier(mixed $data): string
     {
         if ($this->isSampleRender($data)) {
             return 'DPD';
@@ -171,7 +171,7 @@ class YayMailShipmentCreatedEmail extends BaseEmail
         return esc_html(strtoupper($carrier));
     }
 
-    public function shortcodeTrackingNumber($data): string
+    public function shortcodeTrackingNumber(mixed $data): string
     {
         if ($this->isSampleRender($data)) {
             return self::SAMPLE_TRACKING_NUMBER;
@@ -181,7 +181,7 @@ class YayMailShipmentCreatedEmail extends BaseEmail
         return esc_html((string) ($shipmentData['tracking_number'] ?? ''));
     }
 
-    public function shortcodeTrackingUrl($data): string
+    public function shortcodeTrackingUrl(mixed $data): string
     {
         if ($this->isSampleRender($data)) {
             return self::SAMPLE_TRACKING_URL;
@@ -191,7 +191,7 @@ class YayMailShipmentCreatedEmail extends BaseEmail
         return esc_html((string) ($shipmentData['tracking_url'] ?? ''));
     }
 
-    public function shortcodeTrackingLink($data, $shortcodeAtts = []): string
+    public function shortcodeTrackingLink(mixed $data, array $shortcodeAtts = []): string
     {
         $url = $this->isSampleRender($data)
             ? self::SAMPLE_TRACKING_URL
@@ -233,19 +233,19 @@ class YayMailShipmentCreatedEmail extends BaseEmail
         return null;
     }
 
-    private function isSampleRender($data): bool
+    private function isSampleRender(mixed $data): bool
     {
         return !empty($data['render_data']['is_sample']);
     }
 
-    private function getRenderEmail($data): ?ShipmentCreatedEmail
+    private function getRenderEmail(mixed $data): ?ShipmentCreatedEmail
     {
         $email = $data['render_data']['email'] ?? null;
 
         return $email instanceof ShipmentCreatedEmail ? $email : null;
     }
 
-    private function getShipmentDataFromRender($data): array
+    private function getShipmentDataFromRender(mixed $data): array
     {
         $email = $this->getRenderEmail($data);
         if ($email instanceof ShipmentCreatedEmail) {

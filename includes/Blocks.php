@@ -36,7 +36,7 @@ class Blocks
         add_action('woocommerce_rest_checkout_process_payment_with_context', [__CLASS__, 'validateParcelShopBeforePayment'], 5, 2);
     }
 
-    public static function registerCheckoutBlocksIntegration($integration_registry): void
+    public static function registerCheckoutBlocksIntegration(mixed $integration_registry): void
     {
         if (!is_object($integration_registry) || !method_exists($integration_registry, 'register')) {
             return;
@@ -89,7 +89,7 @@ class Blocks
      * @param \WC_Order $order
      * @param \WP_REST_Request $request
      */
-    public static function validateParcelShopOnStoreApi($order, $request)
+    public static function validateParcelShopOnStoreApi(mixed $order, mixed $request)
     {
         if ($order instanceof \WC_Order) {
             self::captureParcelshopDataFromStoreApiRequest($order, $request);
@@ -98,7 +98,7 @@ class Blocks
         self::validateParcelShopSelection($order);
     }
 
-    public static function persistParcelShopOnStoreApi($order, $request): void
+    public static function persistParcelShopOnStoreApi(mixed $order, mixed $request): void
     {
         if (!$order instanceof \WC_Order) {
             return;
@@ -113,7 +113,7 @@ class Blocks
      * @param \Automattic\WooCommerce\StoreApi\Utilities\CheckoutTrait $context
         * @param mixed $result
      */
-    public static function validateParcelShopBeforePayment($context, $result)
+    public static function validateParcelShopBeforePayment(mixed $context, mixed $result)
     {
         $context_data = is_object($context) ? (array) $context : [];
         $order = $context_data['order'] ?? null;
@@ -124,7 +124,7 @@ class Blocks
         }
     }
 
-    private static function captureParcelshopDataFromStoreApiRequest(\WC_Order $order, $request = null): void
+    private static function captureParcelshopDataFromStoreApiRequest(\WC_Order $order, mixed $request = null): void
     {
         $request_parcelshop_data = self::getParcelshopDataFromRequest($request);
 
@@ -136,7 +136,7 @@ class Blocks
         \ArDesign\DPD\Order::persistChosenParcelshopSessionData($order);
     }
 
-    private static function getParcelshopDataFromRequest($request): array
+    private static function getParcelshopDataFromRequest(mixed $request): array
     {
         if (!$request instanceof \WP_REST_Request) {
             return [];

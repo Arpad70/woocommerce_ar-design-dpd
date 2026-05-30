@@ -138,6 +138,15 @@ class ShipmentCreatedEmail extends WC_Email
                 'default' => $this->get_default_additional_content(),
                 'desc_tip' => true,
             ],
+            'email_type' => [
+                'title' => __('Email type', 'ar-design-dpd'),
+                'type' => 'select',
+                'description' => __('Choose which format of email to send.', 'ar-design-dpd'),
+                'default' => 'html',
+                'class' => 'email_type wc-enhanced-select',
+                'options' => $this->get_email_type_options(),
+                'desc_tip' => true,
+            ],
         ];
     }
 
