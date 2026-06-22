@@ -2,21 +2,21 @@
 
 namespace ArDesign\DPD;
 
+use ArDesign\Shared\Workflow\OrderStatusTransitionService;
 use WC_Order;
 
 defined('ABSPATH') || exit;
 
+require_once WP_PLUGIN_DIR . '/ar-design-shared-support/includes/workflow/OrderStatusTransitionService.php';
+
 class OrderWorkflow
 {
-    public const RETURN_STATUS = ARD_WORKFLOW_STATUS_RETURN;
-    public const READY_TO_SHIP_STATUS = ARD_WORKFLOW_STATUS_READY_TO_SHIP;
-    public const IN_TRANSIT_STATUS = ARD_WORKFLOW_STATUS_IN_TRANSIT;
-    public const MANUAL_REVIEW_STATUS = ARD_WORKFLOW_STATUS_MANUAL_REVIEW;
+    public const READY_TO_SHIP_STATUS = 'zabalena';
+    public const IN_TRANSIT_STATUS = 'v-preprave';
+    public const MANUAL_REVIEW_STATUS = 'manual-review';
 
     private const MANAGED_STATUSES = [
-        self::READY_TO_SHIP_STATUS,
         self::IN_TRANSIT_STATUS,
-        self::RETURN_STATUS,
     ];
 
     public static function init(): void
@@ -32,31 +32,18 @@ class OrderWorkflow
 
     public static function registerWorkflowStatusesInLists(array $statuses): array
     {
-        $statuses = ard_workflow_insert_statuses_after(
-            $statuses,
-            [self::READY_TO_SHIP_STATUS, self::IN_TRANSIT_STATUS],
-            'ar-design-dpd',
-            'wc-processing'
-        );
-
         return ard_workflow_insert_statuses_after(
             $statuses,
-            [self::RETURN_STATUS],
+            [self::IN_TRANSIT_STATUS],
             'ar-design-dpd',
-            'wc-v-preprave'
+            'wc-zabalena'
         );
     }
 
     public static function markLabelPrinted(WC_Order $order): bool
     {
-        return self::transitionOrderStatus(
-            $order,
-            self::READY_TO_SHIP_STATUS,
-            __('Shipping label was downloaded and confirmed as printed. Order moved to Na odoslanie.', 'ar-design-dpd'),
-            '',
-            false,
-            ['cancelled', 'refunded', 'failed', 'completed', self::RETURN_STATUS, self::MANUAL_REVIEW_STATUS, self::IN_TRANSIT_STATUS]
-        );
+        $order->add_order_note(__('Shipping label was downloaded and confirmed as printed.', 'ar-design-dpd'));
+        return true;
     }
 
     public static function handleTrackingUpdate(WC_Order $order, array $trackingData): void
@@ -74,34 +61,14 @@ class OrderWorkflow
                 __('Carrier confirmed that the shipment is in transit.', 'ar-design-dpd'),
                 __('Your shipment has been handed over to the carrier and is now in transit.', 'ar-design-dpd'),
                 true,
-                ['cancelled', 'refunded', 'failed', 'completed', self::RETURN_STATUS, self::MANUAL_REVIEW_STATUS]
-            );
-
-            return;
-        }
-
-        if ($status === 'returning_to_sender') {
-            self::transitionOrderStatus(
-                $order,
-                self::RETURN_STATUS,
-                __('Carrier reported that the shipment is returning to the sender.', 'ar-design-dpd'),
-                '',
-                false,
                 ['cancelled', 'refunded', 'failed', 'completed', self::MANUAL_REVIEW_STATUS]
             );
 
             return;
         }
 
-        if ($status === 'courier_returned') {
-            self::transitionOrderStatus(
-                $order,
-                self::MANUAL_REVIEW_STATUS,
-                __('Returned shipment was received back and now requires manual review.', 'ar-design-dpd'),
-                '',
-                false,
-                ['cancelled', 'refunded', 'failed', 'completed']
-            );
+        if (in_array($status, ['returning_to_sender', 'courier_returned'], true)) {
+            $order->add_order_note(__('Carrier reported a return event. WooCommerce status was left unchanged.', 'ar-design-dpd'));
         }
     }
 
@@ -113,42 +80,14 @@ class OrderWorkflow
         bool $notifyCustomer = false,
         array $blockedStatuses = []
     ): bool {
-        $targetStatus = ard_workflow_normalize_status($targetStatus);
-        if ($targetStatus === '') {
-            return false;
-        }
-
-        if (!self::isStatusAvailable($targetStatus)) {
-            $order->add_order_note(sprintf(
-                /* translators: %s: requested WooCommerce order status slug. */
-                __('Requested workflow status "%s" is not available, so the order status was not changed.', 'ar-design-dpd'),
-                $targetStatus
-            ));
-
-            return false;
-        }
-
-        if ($order->has_status([$targetStatus])) {
-            return false;
-        }
-
-        if ($blockedStatuses !== [] && $order->has_status($blockedStatuses)) {
-            return false;
-        }
-
-        $order->update_status($targetStatus, $internalNote);
-
-        if ($notifyCustomer && $customerNote !== '') {
-            $order->add_order_note($customerNote, true, false);
-        }
-
-        return true;
-    }
-
-    private static function isStatusAvailable(string $status): bool
-    {
-        $statuses = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
-
-        return isset($statuses[ard_workflow_wc_status_key($status)]);
+        return OrderStatusTransitionService::transition(
+            $order,
+            $targetStatus,
+            $internalNote,
+            'ar-design-dpd',
+            $customerNote,
+            $notifyCustomer,
+            $blockedStatuses
+        );
     }
 }
