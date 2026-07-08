@@ -22,8 +22,13 @@ class Email
 
     public static function registerEmailClasses(array $emails): array
     {
-        $emails[\ArDesign\DPD\ShipmentCreatedEmail::class] = new \ArDesign\DPD\ShipmentCreatedEmail();
-        $emails[\ArDesign\DPD\ShipmentDeliveredEmail::class] = new \ArDesign\DPD\ShipmentDeliveredEmail();
+        $shipmentCreatedEmail = new \ArDesign\DPD\ShipmentCreatedEmail();
+        $shipmentCreatedKey = sanitize_key((string) ($shipmentCreatedEmail->id ?? self::SHIPMENT_CREATED_EMAIL_ID));
+        $emails['' !== $shipmentCreatedKey ? $shipmentCreatedKey : self::SHIPMENT_CREATED_EMAIL_ID] = $shipmentCreatedEmail;
+
+        $shipmentDeliveredEmail = new \ArDesign\DPD\ShipmentDeliveredEmail();
+        $shipmentDeliveredKey = sanitize_key((string) ($shipmentDeliveredEmail->id ?? self::SHIPMENT_DELIVERED_EMAIL_ID));
+        $emails['' !== $shipmentDeliveredKey ? $shipmentDeliveredKey : self::SHIPMENT_DELIVERED_EMAIL_ID] = $shipmentDeliveredEmail;
 
         return $emails;
     }

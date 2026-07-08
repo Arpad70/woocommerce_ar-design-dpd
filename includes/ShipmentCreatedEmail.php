@@ -33,12 +33,12 @@ class ShipmentCreatedEmail extends WC_Email
 
     public function get_default_subject()
     {
-        return __('Your order #{order_number} is on its way', 'ar-design-dpd');
+        return __('Vaša objednávka č. #{order_number} je na ceste', 'ar-design-dpd');
     }
 
     public function get_default_heading()
     {
-        return __('We have handed your shipment to the carrier', 'ar-design-dpd');
+        return __('Vašu zásielku sme odovzdali dopravcovi', 'ar-design-dpd');
     }
 
     public function trigger(int $order_id, array $shipmentData = [], ?WC_Order $order = null): void

@@ -26,19 +26,17 @@ class ShipmentDeliveredEmail extends WC_Email
             '{tracking_number}' => '',
         ];
 
-        add_action('ard_shipping_shipment_delivered', [$this, 'trigger'], 10, 3);
-
         parent::__construct();
     }
 
     public function get_default_subject()
     {
-        return __('Thank you for your order #{order_number}', 'ar-design-dpd');
+        return __('Objednávka č. #{order_number} z AR Design bola vybavená.', 'ar-design-dpd');
     }
 
     public function get_default_heading()
     {
-        return __('Your order has been delivered', 'ar-design-dpd');
+        return __('Vaša objednávka bola vybavená.', 'ar-design-dpd');
     }
 
     public function trigger(int $order_id, array $shipmentData = [], ?WC_Order $order = null): void
@@ -190,17 +188,17 @@ class ShipmentDeliveredEmail extends WC_Email
 
     protected function get_default_thank_you_message(): string
     {
-        return __('Thank you for your purchase. We believe your order has safely reached you and we hope it brings you joy right away.', 'ar-design-dpd');
+        return __('Vaša objednávka bola úspešne vybavená. Ďakujeme, že ste si vybrali AR DESIGN. Veríme, že Vám objednané produkty prinesú radosť a budú Vám dlho slúžiť.', 'ar-design-dpd');
     }
 
     protected function get_default_promo_message(): string
     {
-        return __('As a thank-you, keep an eye on our current promotions and news. We would love to see you back soon.', 'ar-design-dpd');
+        return __('Ak ste boli s nákupom spokojní, veľmi nás poteší, ak sa s Vašou skúsenosťou podelíte. Budeme radi za Vaše hodnotenie na Google alebo na Heureke.', 'ar-design-dpd');
     }
 
     protected function get_default_complaint_information(): string
     {
-        return __('If anything is not right, you can use our complaint procedure. Please prepare your order number, a short description of the issue and photos if they help explain the problem.', 'ar-design-dpd');
+        return __('Ak budete mať akékoľvek otázky, radi Vám pomôžeme. Ďakujeme za Vašu dôveru a tešíme sa na Vašu ďalšiu návštevu e-shopu AR-design.sk alebo našej predajne AR DESIGN v Poprade.', 'ar-design-dpd');
     }
 
     protected function get_claim_form_url(): string
